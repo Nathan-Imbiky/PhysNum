@@ -63,7 +63,7 @@ private:
   // TODO écrire la fonction 
     void compute_f(valarray<double>& f) const
     {
-      f = d + (g - N)N; 
+      f = d + (g - N)*N; 
       ++totalsteps;
     }
 
@@ -84,11 +84,12 @@ private:
       t += dt;                 //mise à jour du temps 
       
       compute_f(f);
-      delta_N_EE = dt*alpha*f
+      delta_N_EE = dt*alpha*f;
       
     // TODO : Implementer la méthode d'Euler explicite (en utilisant delta_N_EE)
-
-      if(alpha == 1.0){
+	
+      if(alpha == 1.0)
+      {
         N = Nold + delta_N_EE; // Euler explicite
       }
       else
@@ -101,7 +102,7 @@ private:
  
         Ncontrol = Nold + delta_N_EE + dt*(1-alpha)*f; // Ncontrole est la solution de reference pour le calcul de l'erreur, elle doit etre mise a jour a chaque iteration
         // TODO : Calculer l'erreur relative entre N et Ncontrol pour le critere d'arret de la methode iterative
-        error = abs(1-N/Ncontrol);
+        error = mean(1-N/Ncontrol);
         iteration += 1;
       }
       if(iteration>=maxit){
