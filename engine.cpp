@@ -102,7 +102,7 @@ private:
  
         Ncontrol = Nold + delta_N_EE + dt*(1-alpha)*f; // Ncontrole est la solution de reference pour le calcul de l'erreur, elle doit etre mise a jour a chaque iteration
         // TODO : Calculer l'erreur relative entre N et Ncontrol pour le critere d'arret de la methode iterative
-        error = mean(1-N/Ncontrol);
+        error = (1-N[0]/Ncontrol[0]);
         iteration += 1;
       }
       if(iteration>=maxit){
