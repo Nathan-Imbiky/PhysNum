@@ -39,7 +39,9 @@ dt = tf / 2**np.arange(2, 8) #TODO: Adjust for your needs
 nsimul = len(dt)
 
 # Exact solution #TODO: Fill
-Nfp = (g+np.sqrt(g**2+4*d))/2. # steady state solution at t=inf
+beta = np.sqrt(g**2+4*d)
+
+Nfp = (g+beta)/2. # steady state solution at t=inf
 
 C = (N0-Nfp)/(N0+Nfp)
 
@@ -203,3 +205,4 @@ plt.savefig(os.path.join(outdir, f"{figstr}_tau_error_vs_steps.png"), dpi=300)
 plt.show()
 
 plt.show()
+
