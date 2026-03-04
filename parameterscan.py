@@ -5,14 +5,14 @@ from scipy.interpolate import CubicSpline # If you don't have this, you can use 
 import os
 
 # Parameters
-repertoire = '/home/imbiky/Desktop/MyFiles/PhysNum/Exercise1_student_2/runaways/problème'
-executable = './engine.exe' # Change this if your executable has a different name or path, like last week
+repertoire = ''
+executable = './engine' # Change this if your executable has a different name or path, like last week
 input_filename = 'configuration.in.example'
 
-tf = 5.0
-N0 = 1.0
-g = 0.0
-d = 0.0
+tf = 32.0
+N0 = 0.0
+g = 0.5
+d = 0.01
 
 
 
@@ -42,8 +42,13 @@ nsimul = len(dt)
 Nfp = (g+np.sqrt(g**2+4*d))/2. # steady state solution at t=inf
 
 C = (N0-Nfp)/(N0+Nfp)
+
+print(C)
+print(Nfp)
+print(N0)
+print(tf)
     
-Nf =  (1 + C*np.exp(-2*tf*Nfp))/(1-C*np.exp(-2*tf*Nfp)) # exact solution at tf
+Nf =  (1 + C*np.exp(-2*tf*Nfp))/(1 -C*np.exp(-2*tf*Nfp)) # exact solution at tf
 
 Nr = 0.2  # fraction of equilibrium defining characteristic time
 
@@ -51,7 +56,7 @@ Nr = 0.2  # fraction of equilibrium defining characteristic time
 t_ref = np.linspace(0, tf, 200000)
 
 #TODO: calculate N_exact as function of time
-N_exact = (1 + C*np.exp(-2*t_ref*Nfp))/(1-C*np.exp(-2*t_ref*Nfp)) # exact solution as function of time
+N_exact = (1 + C*np.exp(-2*t_ref*Nfp)) # exact solution as function of time
 
 
 ratio_exact = N_exact / Nfp
@@ -124,7 +129,6 @@ for i in range(nsimul):
 
     axs.plot(t, N, label=f"dt={param[i]:.2e}", linewidth=lw, alpha=0.7)
 
-
 plt.plot(t_ref, N_exact, 'k--', linewidth=2, label="Exact")
 axs.set_xlabel(r'$\overline{t}$', fontsize=fs)
 axs.set_ylabel(r'$\overline{N}$', fontsize=fs)
@@ -148,6 +152,8 @@ plt.legend()
 plt.grid(True)
 plt.tight_layout()
 plt.savefig(os.path.join(outdir, f"{figstr}_Nf_error.png"), dpi=300)
+
+plt.show()
 
 # Convergence plot
 plt.figure()
@@ -193,3 +199,7 @@ plt.ylabel("Relative error on tau")
 plt.grid(True, which="both", linestyle="--", linewidth=0.5)
 plt.tight_layout()
 plt.savefig(os.path.join(outdir, f"{figstr}_tau_error_vs_steps.png"), dpi=300)
+
+plt.show()
+
+plt.show()
