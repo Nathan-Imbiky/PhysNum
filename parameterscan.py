@@ -42,15 +42,8 @@ nsimul = len(dt)
 beta = np.sqrt(g**2+4*d)
 
 Nfp = (g+beta)/2. # steady state solution at t=inf
-
-C = (N0-Nfp)/(N0+Nfp)
-
-print(C)
-print(Nfp)
-print(N0)
-print(tf)
     
-Nf =  (1 + C*np.exp(-2*tf*Nfp))/(1 -C*np.exp(-2*tf*Nfp)) # exact solution at tf
+Nf =  (2*d*(1-np.exp(-beta*tf)))/(beta-g+(beta+g)*np.exp(-beta*tf)) # exact solution at tf
 
 Nr = 0.2  # fraction of equilibrium defining characteristic time
 
@@ -58,7 +51,7 @@ Nr = 0.2  # fraction of equilibrium defining characteristic time
 t_ref = np.linspace(0, tf, 200000)
 
 #TODO: calculate N_exact as function of time
-N_exact = (1 + C*np.exp(-2*t_ref*Nfp)) # exact solution as function of time
+N_exact = (2*d*(1-np.exp(-beta*t)))/(beta-g+(beta+g)*np.exp(-beta*t)) # exact solution as function of time
 
 
 ratio_exact = N_exact / Nfp
@@ -205,4 +198,5 @@ plt.savefig(os.path.join(outdir, f"{figstr}_tau_error_vs_steps.png"), dpi=300)
 plt.show()
 
 plt.show()
+
 
