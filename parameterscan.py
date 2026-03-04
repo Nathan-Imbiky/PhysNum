@@ -51,7 +51,8 @@ Nr = 0.2  # fraction of equilibrium defining characteristic time
 t_ref = np.linspace(0, tf, 200000)
 
 #TODO: calculate N_exact as function of time
-N_exact = (2*d*(1-np.exp(-beta*t)))/(beta-g+(beta+g)*np.exp(-beta*t)) # exact solution as function of time
+N_exact = (2*d*(1-np.exp(-beta*t_ref)))/(beta-g+(beta+g)*np.exp(-beta*t_ref)) # exact solution as function of time
+
 
 
 ratio_exact = N_exact / Nfp
@@ -108,16 +109,19 @@ for i in range(nsimul):
         totalsteps.append(total_steps)
 
         #TODO: calculate ratio and tau using interpolation, and store in tau_list
-        ratio.append(NN/Nr) # ratio as function of time
+        ratio = N/NN # ratio as function of time
 
         if ratio[0] <= Nr <= ratio[-1]: # Check if Nr is within the range of ratio for interpolation
             try:
-                tau = np.interp(Nr, ratio, t) #TODO: interpolate to find tau where ratio crosses Nr
-            except ValueError:
+                tau = np.interp(Nr, ratio, t) #TODO: interpolate to find tau where ratiocrosses Nr
+            except ValueError as e:
+                print(e)
                 tau = np.nan
+                print("except")
         else:
             tau = np.nan
-
+            print("else")
+        print(tau)
         tau_list.append(tau)
 
         error[i] = np.abs(1 - NN/Nf) #TODO: calculate relative error on Nf and store in error[i]
@@ -148,7 +152,7 @@ plt.grid(True)
 plt.tight_layout()
 plt.savefig(os.path.join(outdir, f"{figstr}_Nf_error.png"), dpi=300)
 
-plt.show()
+
 
 # Convergence plot
 plt.figure()
@@ -162,17 +166,22 @@ plt.legend()
 plt.tight_layout()
 plt.savefig(os.path.join(outdir, f"{figstr}_Nf_conv.png"), dpi=300)
 
+
+
+
+
 plt.figure()
 plt.plot(dtlist, tau_list, 'r+-', label="numerical")
 plt.axhline(tau_ref, color='k', linestyle='--', label="Exact")
 plt.xlabel(r"d$\overline{t}$")
 plt.ylabel(r"Characteristic time $\overline{\tau}$")
 plt.xscale('log')
-#plt.ylim(0, tf/10)  # Set y-limits to focus on the relevant range
+plt.ylim(0, tf/10)  # Set y-limits to focus on the relevant range
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
 plt.savefig(os.path.join(outdir, f"{figstr}_tau.png"), dpi=300)
+
 
 tau_err = np.abs(1 - np.array(tau_list) / tau_ref)
 
@@ -187,6 +196,8 @@ plt.grid(True)
 plt.tight_layout()
 plt.savefig(os.path.join(outdir, f"{figstr}_tau_error.png"), dpi=300)
 
+
+
 plt.figure()
 plt.loglog(totalsteps, tau_err, 'r+-', label=f"{alphastr}")
 plt.xlabel("Total steps")
@@ -195,8 +206,5 @@ plt.grid(True, which="both", linestyle="--", linewidth=0.5)
 plt.tight_layout()
 plt.savefig(os.path.join(outdir, f"{figstr}_tau_error_vs_steps.png"), dpi=300)
 
-plt.show()
 
 plt.show()
-
-
