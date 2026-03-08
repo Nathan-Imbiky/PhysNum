@@ -95,9 +95,9 @@ private:
       }
       else
       {
-      double a = (alpha - 1)*dt;
-      double b = dt*g*(1-alpha)-1;
-      valarray<double>c = Nold + delta_N_EE + d*dt*(1-alpha);
+      double a = -(alpha - 1)*dt;
+      double b = -(dt*g*(1-alpha)-1);
+      valarray<double>c = -(Nold + delta_N_EE + d*dt*(1-alpha));
       
       cout<<a<<" "<<b<<" "<<c[0]<<" coeffs"<<endl;
       
