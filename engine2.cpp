@@ -70,8 +70,6 @@ private:
     // New step method from EngineEuler
     void step()
     {
-      unsigned int iteration=0;
-      double error=999e0;
       valarray<double> f =valarray<double>(0.e0,1); 
       valarray<double> Nold=valarray<double>(N);
       valarray<double> Ncontrol=valarray<double>(N);      
@@ -86,6 +84,8 @@ private:
       compute_f(f);
       delta_N_EE = dt*alpha*f;
       
+      cout<<delta_N_EE[0]<<" "<<f[0]<<endl;
+      
       
     // TODO : Implementer la méthode d'Euler explicite (en utilisant delta_N_EE)
 	
@@ -95,16 +95,14 @@ private:
       }
       else
       {
-      a = (alpha-1)*dt;
-      b = dt*g*(1-alpha)-1;
-      c = Nold + delta_N_EE + d*dt*(1-alpha)
+      double a = (alpha - 1)*dt;
+      double b = dt*g*(1-alpha)-1;
+      valarray<double>c = Nold + delta_N_EE + d*dt*(1-alpha);
       
-      N = (sqrt(b*b -4*a*c) - b)/2*a
+      cout<<a<<" "<<b<<" "<<c[0]<<" coeffs"<<endl;
+      
+      N = (sqrt(b*b -4*a*c) - b)/2*a;
  
-      Ncontrol = N; // Ncontrole est la solution de reference pour le calcul de l'erreur, elle doit etre mise a jour a chaque iteration
-        // TODO : Calculer l'erreur relative entre N et Ncontrol pour le critere d'arret de la methode iterative
-        error = abs(1-Nold[0]/Ncontrol[0]);
-        
       }
     }
       else
