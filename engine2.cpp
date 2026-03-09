@@ -84,7 +84,7 @@ private:
       compute_f(f);
       delta_N_EE = dt*alpha*f;
       
-      cout<<delta_N_EE[0]<<" "<<f[0]<<endl;
+      //cout<<delta_N_EE[0]<<" "<<f[0]<<endl;
       
       
     // TODO : Implementer la méthode d'Euler explicite (en utilisant delta_N_EE)
@@ -99,9 +99,9 @@ private:
       double b = -(dt*g*(1-alpha)-1);
       valarray<double>c = -(Nold + delta_N_EE + d*dt*(1-alpha));
       
-      cout<<a<<" "<<b<<" "<<c[0]<<" coeffs"<<endl;
+      //cout<<a<<" "<<b<<" "<<c[0]<<" coeffs"<<endl;
       
-      N = (sqrt(b*b -4*a*c) - b)/2*a;
+      N = (sqrt(b*b -4*a*c) - b)/(2*a);
  
       }
     }

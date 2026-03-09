@@ -12,12 +12,12 @@ input_filename = 'configuration.in.example'
 tol = 1e-7
 tf = 32.0
 N0 = 0.0
-g = 0.5
-d = 0.01
+g = -0.2
+d = 0.0001
 
 
 
-alpha = 0 # 1 explicit, 0 implicit, 0.5 semi-implicit
+alpha = 1 # 1 explicit, 0 implicit, 0.5 semi-implicit
 
 if alpha == 0:
     alphastr = "expl"
@@ -36,7 +36,7 @@ os.makedirs(outdir, exist_ok=True)
 print("Saving results in:", outdir)
 # -------------------------------------------------
 
-dt = tf / 2**np.arange(4, 5) #TODO: Adjust for your needs
+dt = tf / 2**np.arange(3, 10) #TODO: Adjust for your needs
 
 dtmin = min(dt)
 dtmax = max(dt)
@@ -58,7 +58,7 @@ t_ref = np.linspace(0, tf, 200000)
 #TODO: calculate N_exact as function of time
 N_exact = (2*d*(1-np.exp(-beta*t_ref)))/(beta-g+(beta+g)*np.exp(-beta*t_ref)) # exact solution as function of time
 
-
+N_approx = d*(1-np.exp(-beta*t_ref))/(-g)
 
 ratio_exact = N_exact / Nfp
 #TODO: calculate tau_ref as the time when ratio_exact crosses Nr, using interpolation
@@ -103,7 +103,7 @@ os.makedirs(repos, exist_ok=True)
 
 
 lw = 1.5
-fs = 16
+fs = 20
 
 fig, axs = plt.subplots(1, 1)
 
@@ -144,12 +144,17 @@ for i in range(nsimul):
 
         axs.plot(t, N, label=f"dt={param[i]:.2e}", linewidth=lw, alpha=0.7)
     
+
+plt.rcParams['font.size'] = 20
+plt.rcParams['legend.fontsize'] = 20
+
 plt.plot(t_ref, N_exact, 'k--', linewidth=2, label="Exact")
+plt.plot(t_ref, N_approx, 'r--', linewidth=2, label="Approximative")
 axs.set_xlabel(r'$\overline{t}$', fontsize=fs)
 axs.set_ylabel(r'$\overline{N}$', fontsize=fs)
 axs.set_xlim(0, tf)
 axs.set_ylim(0, Nf*1.2)
-plt.legend(fontsize=10)
+plt.legend(fontsize=12)
 plt.grid(True)
 plt.tight_layout()
 plt.savefig(os.path.join(outdir, f"{figstr}_time.png"), dpi=300)
