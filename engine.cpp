@@ -30,6 +30,7 @@ private:
   double d;       // Dreicer normalisé
 
 
+
   valarray<double> N0 = std::valarray<double>(0.e0, 1); // Correctly initialized
   valarray<double> N  = std::valarray<double>(0.e0, 1); // Correctly initialized
 
@@ -70,7 +71,7 @@ private:
     // New step method from EngineEuler
     void step()
     {
-      unsigned int iteration=0;
+	  unsigned int iteration=0;
       double error=999e0;
       valarray<double> f =valarray<double>(0.e0,1); 
       valarray<double> Nold=valarray<double>(N);
@@ -94,7 +95,9 @@ private:
       }
       else
       {
-      while((error>tol || iteration<3) && iteration<maxit){
+      while((error>tol || iteration<1) && iteration<maxit){
+      //error>tol  && iteration<maxit){
+      //((error>tol || iteration<3) && iteration<maxit){
         // TODO : Implementer la méthode d'Euler implicite et semi_implicite (en utilisant delta_N_EE)
         
         N = Nold + delta_N_EE + dt*(1-alpha)*f;
@@ -104,9 +107,10 @@ private:
         // TODO : Calculer l'erreur relative entre N et Ncontrol pour le critere d'arret de la methode iterative
         error = abs(1-N[0]/Ncontrol[0]);
         iteration += 1;
+       
       }
       if(iteration>=maxit){
-        cout << "WARNING: maximum number of iterations reached, error: " << error << endl;
+        cout << "WARNING: maximum number of iterations reached, error: " << error << ", maxit :"<<maxit<<endl;
       }
       N = Ncontrol;
       }
@@ -157,6 +161,8 @@ public:
       step();  // faire un pas de temps
       printOut(false); // ecrire le pas de temps actuel
       }
+      
+      cout<<"ittot :"<<totalsteps<<endl;
       printOut(true); // ecrire le dernier pas de temps
       // Ecrire le total des pas de temps calcules
       *outputFile << "Total steps: " << totalsteps << endl; // write output on file
@@ -188,5 +194,4 @@ int main(int argc, char* argv[])
   cout << "Fin de la simulation." << endl;
   return 0;
 }
-
 

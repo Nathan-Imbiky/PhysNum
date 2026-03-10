@@ -9,7 +9,8 @@ repertoire = ''
 executable = './engine' # Change this if your executable has a different name or path, like last week
 input_filename = 'configuration.in.example'
 
-tol = 1e-7
+tol = 7.75e-3
+#/ 10**np.arange(3, 10)
 tf = 32.0
 N0 = 0.0
 g = 0.5
@@ -17,7 +18,7 @@ d = 0.01
 
 
 
-alpha = 1 # 1 explicit, 0 implicit, 0.5 semi-implicit
+alpha = 0.5 # 1 explicit, 0 implicit, 0.5 semi-implicit
 
 if alpha == 0:
     alphastr = "expl"
@@ -36,12 +37,13 @@ os.makedirs(outdir, exist_ok=True)
 print("Saving results in:", outdir)
 # -------------------------------------------------
 
-dt = tf / 2**np.arange(3, 10) #TODO: Adjust for your needs
+dt = tf / 2**np.arange(3, 11) #TODO: Adjust for your needs
 
 dtmin = min(dt)
 dtmax = max(dt)
 
 nsimul = len(dt)
+#ntol = len(tol)
 
 # Exact solution #TODO: Fill
 beta = np.sqrt(g**2+4*d)
@@ -93,10 +95,12 @@ for i in range(nsimul):
     subprocess.run(cmd, shell=True)
     print('Done.')
 
+
+
 error = np.zeros(nsimul)
 
 
-suffix = f"_g_{g:.2g}_d_{d:.2g}_dtmin{dtmin:.2g}_dtmax{dtmax:.2g}_tol{tol:2g}"
+suffix = f"_g_{g:.2g}_d_{d:.2g}_dtmin{dtmin:.2g}_dtmax{dtmax:.2g}_"
 repos = "figures" + suffix
 os.makedirs(repos, exist_ok=True)
 
@@ -124,11 +128,12 @@ for i in range(nsimul):
         #TODO: calculate ratio and tau using interpolation, and store in tau_list
         ratio = N/NN # ratio as function of time
         
-        print(ratio[0], ratio[-1], Nr)
+        #print(ratio[0], ratio[-1], Nr)
 
         if ratio[0] <= Nr <= ratio[-1]: # Check if Nr is within the range of ratio for interpolation
             try:
-                tau = np.interp(Nr, ratio, t) #TODO: interpolate to find tau where ratiocrosses Nr
+                tau = np.interp(Nr, ratio, t) #TODO: interpolate to find tau where ratiocrosses Nr		
+                print(tau)
             except ValueError as e:
                 print(e)
                 tau = np.nan
@@ -198,7 +203,7 @@ plt.savefig(repos+"/Lim_nf_dt"+suffix+".png")
 plt.figure()
 plt.plot(dtlist, tau_list, 'r+-', label="numerical")
 plt.axhline(tau_ref, color='k', linestyle='--', label="Exact")
-plt.xlabel(r"d$\overline{t}$")
+plt.xlabel(r"tol")
 plt.ylabel(r"Characteristic time $\overline{\tau}$")
 plt.xscale('log')
 plt.ylim(0, tf/10)  # Set y-limits to focus on the relevant range
