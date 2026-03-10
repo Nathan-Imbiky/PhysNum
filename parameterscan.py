@@ -12,8 +12,8 @@ input_filename = 'configuration.in.example'
 tol = 1e-7
 tf = 32.0
 N0 = 0.0
-g = -0.2
-d = 0.0001
+g = 0.5
+d = 0.01
 
 
 
@@ -149,11 +149,13 @@ plt.rcParams['font.size'] = 20
 plt.rcParams['legend.fontsize'] = 20
 
 plt.plot(t_ref, N_exact, 'k--', linewidth=2, label="Exact")
-plt.plot(t_ref, N_approx, 'r--', linewidth=2, label="Approximative")
+#plt.plot(t_ref, N_approx, 'r--', linewidth=2, label="Approximative")
 axs.set_xlabel(r'$\overline{t}$', fontsize=fs)
 axs.set_ylabel(r'$\overline{N}$', fontsize=fs)
 axs.set_xlim(0, tf)
 axs.set_ylim(0, Nf*1.2)
+plt.xticks(fontsize=17)
+plt.yticks(fontsize=17)
 plt.legend(fontsize=12)
 plt.grid(True)
 plt.tight_layout()
