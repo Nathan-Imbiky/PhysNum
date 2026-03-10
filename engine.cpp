@@ -104,7 +104,6 @@ private:
         // TODO : Calculer l'erreur relative entre N et Ncontrol pour le critere d'arret de la methode iterative
         error = abs(1-N[0]/Ncontrol[0]);
         iteration += 1;
-        cout<<tol<<" "<<error<<endl;
       }
       if(iteration>=maxit){
         cout << "WARNING: maximum number of iterations reached, error: " << error << endl;
@@ -189,4 +188,5 @@ int main(int argc, char* argv[])
   cout << "Fin de la simulation." << endl;
   return 0;
 }
+
 
