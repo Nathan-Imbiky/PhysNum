@@ -66,7 +66,7 @@ private:
   double Pnonc(double theta, double thetadot, double t_)
   {
 
-      return m*L*rOmega*Omega*thetadot*sin(Omega*t_ - theta) -kappa*L*thetadot(L*thetadot + r*Omega*cos(Omega*t_ - theta));
+      return m*L*r*Omega*Omega*thetadot*sin(Omega*t_ - theta) -kappa*L*thetadot*(L*thetadot + r*Omega*cos(Omega*t_ - theta));
   }
 
   // TODO écrire la fonction pour l'acceleration (theta_doubledot)
@@ -79,11 +79,11 @@ private:
   // TODO implementer le schéma Velocity Verlet pour une accélération dependante du theta, thetadot et t.
   void step()
   {
-    thetaold = theta;
+    double thetaold = theta;
      
     theta += dt*thetadot + (dt*dt/(2*m))*m*compute_acc(theta, thetadot, t);
     
-    thetadot+= (dt/2)*(compute_acc(theta, thetadot, t) + compute_acc(thetaold, thetadot, t))
+    thetadot+= (dt/2)*(compute_acc(theta, thetadot, t) + compute_acc(thetaold, thetadot, t));
     
     t += dt;
   }
