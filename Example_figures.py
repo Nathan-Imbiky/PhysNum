@@ -5,6 +5,7 @@ import os
 import glob
 import re
 import math
+from scipy.signal import find_peaks
 
 # ============================================================
 # USER SETTINGS
@@ -201,6 +202,7 @@ for i,data in enumerate(datasets):
     axes[i].plot(t, E, color=color,
                  label=f"{param_name}={param_values[i]}")
                  
+                 
     axes[i].plot(t, moyenne, color=color, linestyle ="--",
                  label=f"{param_name} avg={param_values[i]}")
 
@@ -313,5 +315,30 @@ if plot_layout["energy_balance"]:
 
 fig.savefig(os.path.join(fig_dir,"energy_balance_all.png"), dpi=300)
 
+
+# ============================================================
+# Plot 7 : system period
+# ============================================================
+medio = []
+T = []
+
+
+for data in datasets :
+    medio.append(data[:,0:2])
+   
+    
+    peaks, _ = find_peaks(medio[-1][:,1])
+    periods = np.diff(medio[-1][:,0][peaks])
+
+    #print(store_period)
+    T.append(np.mean(periods))
+
+
+
+
+
+
+print(T)
+	
 
 plt.show()
