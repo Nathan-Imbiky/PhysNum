@@ -19,7 +19,8 @@ plot_layout = {
     "energy": True,
     "real_space": False,
     "power": True,
-    "energy_balance": True
+    "energy_balance": True,
+    "dt":True
 }
 
 # ============================================================
@@ -335,10 +336,22 @@ for data in datasets :
 
 
 
-
-
-
 print(T)
+
+fig, axes = get_axes("dt", "Période T")
+#Plot theoric value //////////////////////////////////
+
+dt = []
+for data in datasets :
+    dt.append(2/len(data[:,0]))
+    
+axes[0].plot(dt, T, linestyle='-', marker='x', color="red", label="dt=f{dt}")
+axes[0].set_xlabel("dt")
+axes[0].set_ylabel("Période")
+axes[0].grid()
+
+
+fig.savefig(os.path.join(fig_dir,"Period.png"), dpi=300)
 	
 
 plt.show()
