@@ -32,7 +32,6 @@ os.makedirs(fig_dir, exist_ok=True) #n2 exist_ok
 # Scan files
 # ============================================================
 files = sorted(glob.glob(os.path.join(folder, "*.txt")))
-print(files)
 
 datasets = []
 param_values = []
@@ -195,11 +194,15 @@ for i,data in enumerate(datasets):
 
     t = data[:,0]
     E = data[:,3]
+    moyenne = np.mean(E)*np.ones(len(E))
 
     color = cmap(i % 10)
 
     axes[i].plot(t, E, color=color,
                  label=f"{param_name}={param_values[i]}")
+                 
+    axes[i].plot(t, moyenne, color=color, linestyle ="--",
+                 label=f"{param_name} avg={param_values[i]}")
 
     axes[i].set_xlabel("t")
     axes[i].set_ylabel("Energy")
