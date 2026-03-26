@@ -80,10 +80,12 @@ private:
   void step()
   {
     double thetaold = theta;
-     
-    theta += dt*thetadot + (dt*dt/(2*m))*m*compute_acc(theta, thetadot, t);
     
-    thetadot+= (dt/2)*(compute_acc(theta, thetadot, t) + compute_acc(thetaold, thetadot, t));
+    double demiv = thetadot + compute_acc(thetaold, thetadot, t)/2;
+     
+    theta += dt*thetadot + (dt*dt/2)*compute_acc(theta, thetadot, t);
+    
+    thetadot+= (dt/2)*(compute_acc(theta, demiv, t) + compute_acc(thetaold, demiv, t));
     
     t += dt;
   }
