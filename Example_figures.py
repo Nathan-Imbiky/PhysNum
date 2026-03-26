@@ -345,7 +345,11 @@ dt = []
 for data in datasets :
     dt.append(2/len(data[:,0]))
     
+val_th = 2*np.pi/(np.sqrt(9.81/0.2))
+val = val_th*np.ones(len(dt))
+    
 axes[0].plot(dt, T, linestyle='-', marker='x', color="red", label="dt=f{dt}")
+axes[0].plot(dt, val, linestyle='--', marker=None, color="black", label="Valeur théorique")
 axes[0].set_xlabel("dt")
 axes[0].set_ylabel("Période")
 axes[0].grid()
