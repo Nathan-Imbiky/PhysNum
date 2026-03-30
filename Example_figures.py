@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy
 from matplotlib.collections import LineCollection
 import os
 import glob
@@ -11,16 +12,18 @@ from scipy.signal import find_peaks
 # USER SETTINGS
 # ============================================================
 
-folder = r"/home/imbiky/Desktop/MyFiles/PhysNum/Exercise2_student/rotatingpendulum/problème/Scan_nsteps_pendulum_kappa_0_r_0_Omega_2" #n0 outputs ?
+folder = r"/home/imbiky/Desktop/MyFiles/PhysNum/Exercise2_student/rotatingpendulum/problème/Scan_r_pendulum_kappa_0.01_r_1_Omega_7" #n0 outputs ?
 
 plot_layout = {
-    "theta_time": True,
+    "theta_time": False,
     "phase_space": False,
-    "energy": True,
+    "energy": False,
     "real_space": False,
     "power": True,
-    "energy_balance": True,
-    "dt":True
+    "energy_balance": False,
+    "dt":True,
+    "delta_theta":True,
+    "Poincare":False
 }
 
 # ============================================================
@@ -123,11 +126,14 @@ def get_axes(plot_key, title): #n5 rien compris
 
 
 cmap = plt.get_cmap("tab10") #n6 c qui la colored map ptn
-
+plt.rcParams['font.size'] = 12
+plt.rcParams['legend.fontsize'] = 12
 
 # ============================================================
 # Plot 1 : theta vs time
 # ============================================================
+thetamax = 0.;
+thetaindex = 0.;
 
 fig, axes = get_axes("theta_time", "Angle vs time")
 
@@ -135,6 +141,10 @@ for i,data in enumerate(datasets):
 
     t = data[:,0]
     theta = (data[:,1] + np.pi)%(2*np.pi) - np.pi
+    
+    if(thetamax<np.max(theta)) :
+        thetamax = np.max(theta)
+        thetaindex=param_values[i]
 
     color = cmap(i % 10)
 
@@ -153,6 +163,8 @@ if plot_layout["theta_time"]:
 
 fig.savefig(os.path.join(fig_dir,"theta_vs_time_all.png"), dpi=300)
 
+print("thetamax :", thetamax)
+print("Omega :", thetaindex)
 
 # ============================================================
 # Plot 2 : phase space
@@ -330,13 +342,14 @@ for data in datasets :
     
     peaks, _ = find_peaks(medio[-1][:,1])
     periods = np.diff(medio[-1][:,0][peaks])
+    print(periods)
 
     #print(store_period)
     T.append(np.mean(periods))
 
 
 
-print(T)
+#print(T)
 
 fig, axes = get_axes("dt", "Période T")
 #Plot theoric value //////////////////////////////////
@@ -345,17 +358,57 @@ dt = []
 for data in datasets :
     dt.append(2/len(data[:,0]))
     
-val_th = 2*np.pi/(np.sqrt(9.81/0.2))
-val = val_th*np.ones(len(dt))
+arg = np.arange(1e-8, np.pi, 0.01)
     
-axes[0].plot(dt, T, linestyle='-', marker='x', color="red", label="dt=f{dt}")
-axes[0].plot(dt, val, linestyle='--', marker=None, color="black", label="Valeur théorique")
-axes[0].set_xlabel("dt")
+val = 4*np.sqrt(0.2/9.81)*scipy.special.ellipk(np.sin(arg/2.)**2)
+#val = val_th*np.ones(len(dt))
+#val th de base c'est 2pi/sqrt(g/L)
+
+print(val)
+print(T)
+
+    
+axes[0].plot(param_values, T, linestyle='', marker='o', color="red", label=u"T(θ0)")
+axes[0].plot(arg, val, linestyle='--', marker=None, color="black", label="Valeur théorique")
+axes[0].set_xlabel(u"θ initial")
 axes[0].set_ylabel("Période")
+axes[0].legend()
 axes[0].grid()
 
 
 fig.savefig(os.path.join(fig_dir,"Period.png"), dpi=300)
 	
+# ============================================================
+# Plot 8 : linlog
+# ============================================================
+fig, axes = get_axes("delta_theta", "Difference in theta")
+
+check = False #True pour la question c.iii uniquement, autrement erreurs
+
+if check : 
+
+        t = datasets[0][:,0]
+        theta = np.abs((datasets[1][:,1]- datasets[0][:,1]+ np.pi)%(2*np.pi) - np.pi)
+    
+    
+
+        color = 'blue'
+
+        axes[0].plot(t, theta, color=color, linestyle='--',
+                     label=f"{param_name}={param_values[0]}")
+                 
+        axes[0].set_yscale('log')
+        axes[0].set_xlabel("t")
+        axes[0].set_ylabel(u"Δθ")
+        axes[0].grid()
+
+        if not plot_layout["delta_theta"]:
+            axes[0].set_title(f"{param_name} = {param_values[0]}")
+
+        if plot_layout["delta_theta"]:
+            axes[0].legend()
+
+        fig.savefig(os.path.join(fig_dir,"delta_theta.png"), dpi=300)
+
 
 plt.show()
