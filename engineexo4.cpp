@@ -21,7 +21,7 @@ private:
 
   // definition des variables
 
-  double G, mA, d, r0, v0, h, mT, mL, rho_0, R_T, lambda, Cx, dTL;         // accélération gravitationnelle, masse, longueur, fréquence angulaire, rayon, coefficient de frottement
+  double G, mA, d, r0, v0, h, mT, mL, rho_0, R_T, lambda, Cx, dTL, R_L;         // accélération gravitationnelle, masse, longueur, fréquence angulaire, rayon, coefficient de frottement
 
   bool adaptative = true;
   bool atmosphere = false;
@@ -204,6 +204,11 @@ double rho()
     t += sizestep;
   }
 
+bool checkCollisions()
+{
+	return (dist(0,1)<= R_T + (d/2)) || (dist(0, 2) <= R_L + (d/2)) || (dist(1, 2) <= R_L + R_T);
+}
+
 
 public:
     // Modified constructor
@@ -221,6 +226,7 @@ public:
       mL = configFile.get<double>("mL", mL);
       rho_0 = configFile.get<double>("rho_0", rho_0);
       R_T = configFile.get<double>("R_T", R_T);
+      R_L = configFile.get<double>("R_L", R_L);
       lambda = configFile.get<double>("lambda", lambda);
       Cx = configFile.get<double>("Cx", Cx);
       dTL = configFile.get<double>("dTL", dTL);  
@@ -267,12 +273,16 @@ public:
       last = 0;
       printOut(true);
 
-      while( t < tf-0.5*sizestep )
+      while( t < tf-0.5*sizestep && not checkCollisions())
       {
         step();
         printOut(false);
       }
       printOut(true);
+      if(checkCollisions())
+      {
+		  std::cout<<"Erreur : Collision"<<endl;
+	  }
     };
 };
 
@@ -301,5 +311,5 @@ int main(int argc, char* argv[])
   cout << "Fin de la simulation." << endl;
   return 0;
 }
-checkCollisions, printOut,  jspquoi d'autre mais au moins tt ça qui reste ;
+printOut, print hmin et vmax, jspquoi d'autre mais au moins tt ça qui reste ;
 
