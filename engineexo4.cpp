@@ -24,11 +24,14 @@ private:
   double G, mA, d, r0, v0, h, mT, mL, rho_0, R_T, lambda, Cx, dTL;         // accélération gravitationnelle, masse, longueur, fréquence angulaire, rayon, coefficient de frottement
 
   bool adaptative = true;
+  bool atmosphere = false;
   std::valarray<double> y;
+  double tol_adapt = 1e-8;
 
   double t;  // Temps courant pas de temps
   double tf;          // Temps final
   double dt;      // Intervalle de temps
+  double sizestep;
   int nsteps_per; // Nombre de pas de temps par période d'excitation
   int numBodies;
 
@@ -66,11 +69,11 @@ private:
   double Emec(std::valarray<double> const& y, double t_)
   {
       double K =(1/2.0)*(mA*(y[ivx(0)]*y[ix(0)]) + mT*(y[ivx(1)]*y[ivx(1)]) + mL*(y[ivx(2)]*y[ivx(2)]));
-      double U = -G*( mA*mT/( norm(0, 1) ) + mA*mL/( norm(0, 2) ) + mL*mT/( norm(1, 2) ));
+      double U = -G*( mA*mT/( dist(0, 1) ) + mA*mL/( dist(0, 2) ) + mL*mT/( dist(1, 2) ));
       return  K + U;
   }
   
-	  double norm(size_t i, size_t j) ////distance entre les astres i et j
+	  double dist(size_t i, size_t j) ////distance entre les astres i et j
 	  {
 		  if(i<y.size()/6 && j<y.size()/6)
 		  {
@@ -81,23 +84,39 @@ private:
 			return 0.0;
 		}
 	  }
-  double Pnonc(std::valarray<double> const& y, double t_)
-  {
-	  return ;
-  }
-  
+	  
+	  
+
   std::valarray<double> momentum(std::valarray<double> const& y, double t_)
   {
 	  return mA*y[std::slice(ivx(0), 2, 1)] + mT*y[std::slice(ivx(1), 2, 1)] + mL*y[std::slice(ivx(2), 2, 1)];
   }
+  
+  
+  std::valarray<double> rk4step(double step, const std::valarray<double>& y)
+  {
+	std::valarray<double> k1 = acc(y);
+	std::valarray<double> k2 = acc(y + (k1/2));
+	std::valarray<double> k3 = acc(y + (k2/2));
+	std::valarray<double> k4 = acc(y + k3);
+	return y + (step/6)*(k1 + 2*k2 + 2*k3 + k4);
+  }
 
-checkCollisions, printOut, rk4step, step, run, Pnonc, jspquoi d'autre mais au moins tt ça qui reste 
 
-  // TODO definir la puissance des forces non conservatives
+double S() //Surface sectionnelle de la sonde
+{
+	return (pi*d*d)/4;
+}
+
+double rho()
+{
+	return rho_0*exp(-(dist(0, 1)-R_T)/lambda);
+}
+
+  // TODO definir la puissance des forces non conservatives (trainée de l'air) sur la sonde 
   double Pnonc(std::valarray<double> const& y, double t_)
   {
-      
-      return 0.;
+      return -(rho()*S()*Cx*pow(norm(y[std::slice(ivx(0), 2, 1)] - y[std::slice(ivx(1), 2, 1)]), 3))/2;
   }
   
   double mass(size_t i) ////helper associant la masse d'un astre à son numéro
@@ -116,42 +135,73 @@ checkCollisions, printOut, rk4step, step, run, Pnonc, jspquoi d'autre mais au mo
 		}
 	  }
   
-  double gravx(size_t i, size_t j) ////helper pour l'expression de la force de gravitation sur le corps i par le corps j selon l'axe x
+  double Fx(size_t i, size_t j, std::valarray<double> const& y) ////helper pour l'expression de la force sur le corps i par le corps j selon l'axe x
 	  {
+		  double F=0.0;
 		  if(i<y.size()/6 && j<y.size()/6 && i!=j)
 		  {
-			return -G*mass(i)*mass(j)*(y[ix(i)]-y[ix(j)])/(norm(i, j)*norm(i, j)*norm(i, j));
+			F-= G*mass(i)*mass(j)*(y[ix(i)]-y[ix(j)])/(dist(i, j)*dist(i, j)*dist(i, j));
 		}
-		else
+		if(atmosphere && i==0 && j==1)
 		{
-			return 0.0;
+			F-= (rho()*S()*Cx*norm(y[std::slice(ivx(0), 2, 1)] - y[std::slice(ivx(1), 2, 1)])*(y[ivx(0)] - y[ivx(1)]))/2;
 		}
+		return F;
 	  }
 	  
-  double gravy(size_t i, size_t j) ////helper pour l'expression de la force de gravitation sur le corps i par le corps j selon l'axe y
+  double Fy(size_t i, size_t j, std::valarray<double> const& y) ////helper pour l'expression de la force sur le corps i par le corps j selon l'axe y
 	  {
+		  double F = 0.0;
 		  if(i<y.size()/6 && j<y.size()/6 && i!=j)
 		  {
-			return -G*mass(i)*mass(j)*(y[iy(i)]-y[iy(j)])/(norm(i, j)*norm(i, j)*norm(i, j));
+			F-= G*mass(i)*mass(j)*(y[iy(i)]-y[iy(j)])/(dist(i, j)*dist(i, j)*dist(i, j));
 		}
-		else
+		if(atmosphere && i==0 && j==1)
 		{
-			return 0.0;
+			F-=(rho()*S()*Cx*norm(y[std::slice(ivx(0), 2, 1)] - y[std::slice(ivx(1), 2, 1)])*(y[ivy(0)] - y[ivy(1)]))/2;
 		}
+		return F;
 	  }	  
+	  
+  double norm(const std::valarray<double>& v) {
+    return std::sqrt((v * v).sum());
+ }
+ 
+ double instacc(std::valarray<double> const& y, double t_)
+ {
+	 return norm( acc(y)[std::slice(ivx(0), 2, 1)]);
+ }
 
-  // TODO écrire la fonction pour l'acceleration (theta_doubledot)
+  // TODO écrire la fonction pour l'acceleration 
   std::valarray<double> acc(std::valarray<double> const& y)
   {
-      std::valarray<double> f = {y[ivx(0)], y[ivy(0)], y[ivx(1)], y[ivy(1)], y[ivx(2)], y[ivy(2)], gravx(0, 1) + gravx(0, 2), gravy(0, 1) + gravy(0, 2), gravx(1, 0) + gravx(1, 2), gravy(1, 0) + gravy(1, 2), gravx(2, 1) + gravx(2, 0), gravy(2, 1) + gravy(2, 0),};
-
+      std::valarray<double> f = {y[ivx(0)], y[ivy(0)], y[ivx(1)], y[ivy(1)], y[ivx(2)], y[ivy(2)], Fx(0, 1, y) + Fx(0, 2, y), Fy(0, 1, y) + Fy(0, 2, y), Fx(1, 0, y) + Fx(1, 2, y), Fy(1, 0, y) + Fy(1, 2, y), Fx(2, 1, y) + Fx(2, 0, y), Fy(2, 1, y) + Fy(2, 0, y),};
       return f;
   }
-  // TODO implementer le schéma Velocity Verlet pour une accélération dependante du theta, thetadot et t.
+  // TODO implementer le schéma RK4
   void step()
   {
-	
-    t += dt;
+	if(adaptative)
+	{
+		double dt_morph = dt;
+		double change_rate = 0.99;
+		std::valarray<double> yA =0*y;
+		std::valarray<double> yB =0*y;
+		int n=0;
+		do{
+			++n;
+			yA = rk4step(dt_morph, y);
+			yB =rk4step(dt_morph/2, rk4step(dt_morph/2, y));
+			dt_morph *= change_rate*pow(tol_adapt/norm(yA-yB), 1/(n+1));
+		}while(norm(yA-yB)>tol_adapt);
+		sizestep = dt_morph/(change_rate*pow(tol_adapt/norm(yA-yB), 1/(n+1)));
+	}
+	else
+	{
+		sizestep = dt;
+		y = rk4step(dt, y);
+	}
+    t += sizestep;
   }
 
 
@@ -174,6 +224,8 @@ public:
       lambda = configFile.get<double>("lambda", lambda);
       Cx = configFile.get<double>("Cx", Cx);
       dTL = configFile.get<double>("dTL", dTL);  
+      
+      sizestep = 0.0;
       
      double x1= configFile.get<double>("x1", x1);
      double x2= configFile.get<double>("x2", x2);
@@ -215,7 +267,7 @@ public:
       last = 0;
       printOut(true);
 
-      while( t < tf-0.5*dt )
+      while( t < tf-0.5*sizestep )
       {
         step();
         printOut(false);
@@ -249,5 +301,5 @@ int main(int argc, char* argv[])
   cout << "Fin de la simulation." << endl;
   return 0;
 }
-
+checkCollisions, printOut,  jspquoi d'autre mais au moins tt ça qui reste ;
 
