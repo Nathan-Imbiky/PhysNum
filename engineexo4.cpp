@@ -26,7 +26,7 @@ private:
   bool adaptative = false;
   bool atmosphere = false;
   std::valarray<double> y;
-  double tol_adapt = 1e-8;
+  double tol_adapt = 1e-4;
 
   double t;  // Temps courant pas de temps
   double tf;          // Temps final
@@ -74,10 +74,10 @@ private:
   // TODO definir l'énergie mechanique
   double Emec(std::valarray<double> const& y, double t_)
   {
-      double K =(1/2.0)*(mA*(y[ivx(0)]*y[ix(0)]) + mT*(y[ivx(1)]*y[ivx(1)]) + mL*(y[ivx(2)]*y[ivx(2)]));
+      double K =(1/2.0)*(mA*(y[ivx(0)]*y[ivx(0)] + y[ivy(0)]*y[ivy(0)]) + mT*(y[ivx(1)]*y[ivx(1)] + y[ivy(1)]*y[ivy(1)]) + mL*(y[ivx(2)]*y[ivx(2)] + y[ivy(2)]*y[ivy(2)]));
       double U = -G*( mA*mT/( dist(0, 1) ) + mA*mL/( dist(0, 2) ) + mL*mT/( dist(1, 2) ));
-      cout<<K<<"K, "<<U<<"U"<<endl;
-      cout<<dist(0,1)<<"Terre Artémis, "<<dist(0, 2)<<"Lune Artémis, "<<dist(1, 2)<<"Terre Lune"<<endl;
+      //cout<<K<<"K, "<<U<<"U"<<endl;
+      //cout<<dist(0,1)<<"Terre Artémis, "<<dist(0, 2)<<"Lune Artémis, "<<dist(1, 2)<<"Terre Lune"<<endl;
       return  K + U;
   }
   
@@ -108,9 +108,10 @@ private:
   std::valarray<double> rk4step(double step, const std::valarray<double>& y)
   {
 	std::valarray<double> k1 = acc(y);
-	std::valarray<double> k2 = acc(y + (k1/2));
-	std::valarray<double> k3 = acc(y + (k2/2));
-	std::valarray<double> k4 = acc(y + k3);
+	std::valarray<double> k2 = acc(y + step*(k1/2));
+	std::valarray<double> k3 = acc(y + step*(k2/2));
+	std::valarray<double> k4 = acc(y + step*k3);
+	//cout<<"k1 "<<k1[0]<<", "<<k1[ivx(0)]<<endl;
 	return y + (step/6)*(k1 + 2*k2 + 2*k3 + k4);
   }
 
@@ -150,13 +151,13 @@ double rho()
   double Fx(size_t i, size_t j, std::valarray<double> const& y) ////helper pour l'expression de la force sur le corps i par le corps j selon l'axe x
 	  {
 		  double F=0.0;
-		  if(i<y.size()/6 && j<y.size()/6 && i!=j)
+		  if(i<3 && j<3 && i!=j)
 		  {
-			F-= G*mass(i)*mass(j)*(y[ix(i)]-y[ix(j)])/(dist(i, j)*dist(i, j)*dist(i, j));
+			F-= G*mass(j)*(y[ix(i)]-y[ix(j)])/(dist(i, j)*dist(i, j)*dist(i, j));
 		}
 		if(atmosphere && i==0 && j==1)
 		{
-			F-= (rho()*S()*Cx*norm(y[std::slice(ivx(0), 2, 1)] - y[std::slice(ivx(1), 2, 1)])*(y[ivx(0)] - y[ivx(1)]))/2;
+			F-= (rho()*S()*Cx*norm(y[std::slice(ivx(0), 2, 1)] - y[std::slice(ivx(1), 2, 1)])*(y[ivx(0)] - y[ivx(1)]))/(2*mass(i));
 		}
 		return F;
 	  }
@@ -164,14 +165,16 @@ double rho()
   double Fy(size_t i, size_t j, std::valarray<double> const& y) ////helper pour l'expression de la force sur le corps i par le corps j selon l'axe y
 	  {
 		  double F = 0.0;
-		  if(i<y.size()/6 && j<y.size()/6 && i!=j)
+		  if(i<3 && j<3 && i!=j)
 		  {
-			F-= G*mass(i)*mass(j)*(y[iy(i)]-y[iy(j)])/(dist(i, j)*dist(i, j)*dist(i, j));
+			F-= G*mass(j)*(y[iy(i)]-y[iy(j)])/(dist(i, j)*dist(i, j)*dist(i, j));
+			//if(F>1e-2){cout<<F<<" and "<<(y[iy(i)]-y[iy(j)])<<endl;}
 		}
 		if(atmosphere && i==0 && j==1)
 		{
-			F-=(rho()*S()*Cx*norm(y[std::slice(ivx(0), 2, 1)] - y[std::slice(ivx(1), 2, 1)])*(y[ivy(0)] - y[ivy(1)]))/2;
+			F-=(rho()*S()*Cx*norm(y[std::slice(ivx(0), 2, 1)] - y[std::slice(ivx(1), 2, 1)])*(y[ivy(0)] - y[ivy(1)]))/(2*mass(i));
 		}
+		
 		return F;
 	  }	  
 	  
@@ -188,6 +191,7 @@ double rho()
   std::valarray<double> acc(std::valarray<double> const& y)
   {
       std::valarray<double> f = {y[ivx(0)], y[ivy(0)], y[ivx(1)], y[ivy(1)], y[ivx(2)], y[ivy(2)], Fx(0, 1, y) + Fx(0, 2, y), Fy(0, 1, y) + Fy(0, 2, y), Fx(1, 0, y) + Fx(1, 2, y), Fy(1, 0, y) + Fy(1, 2, y), Fx(2, 1, y) + Fx(2, 0, y), Fy(2, 1, y) + Fy(2, 0, y),};
+      //cout<<f[ivx(0)]<<" and "<<f[ivy(0)]<<endl;
       return f;
   }
   // TODO implementer le schéma RK4
@@ -268,7 +272,7 @@ public:
       outputFile->precision(15);
       
       dt = tf/nsteps_per;
-      numBodies = y.size();
+      numBodies = y.size()/4;
     };
 
 

@@ -26,9 +26,11 @@ vmax = np.sqrt(v0**2 + 2*G*mT*((1/(h+R_T))-(1/r0)))
 vt = (vmax*(h+R_T))/r0
 vr = np.sqrt(v0**2-vt**2)
 
+print(f"vt = {vt}, vr = {vr}, v0 = {v0}, vmax = {vmax}")
+
 
 input_parameters = {
-    'tf': 2, # t final (overwritten if N >0)
+    'tf': 4*172800, # t final (overwritten if N >0)
     'nsteps': 10000, # number of time steps per period (if N>0), number of timesteps total if N=0
     'G' : 6.674*1e-11, 
     'mA' :8500, 
@@ -51,13 +53,13 @@ input_parameters = {
     'y1': 0,
     'y2':0.0,
     'y3':0,
-    'vx1': vr,
+    'vx1': -vr,
     'vx2':0.0,
     'vx3':0.0,
     'vy1': vt,
     'vy2':0.0,
     'vy3':0.0,
-    'sampling': 1
+    'sampling': 3
 }
 
 # -------------------------------------------------
@@ -66,7 +68,7 @@ input_parameters = {
 
 paramstr = 'nsteps' # The parameter to scan, must be one of the keys in input_parameters
 
-variable_array = 2**np.arange(3, 15)  # Example values for the parameter scan
+variable_array = 2**np.arange(3, 18)  # Example values for the parameter scan
 
 
 outstr = f"pendulum_x1_{input_parameters['x1']:.2g}_y1_{input_parameters['y1']:.2g}_vx1_{input_parameters['vx1']:.2g}_vy1_{input_parameters['vy1']:.2g}"
