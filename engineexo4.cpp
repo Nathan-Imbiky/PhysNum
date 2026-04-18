@@ -83,9 +83,13 @@ private:
   
 	  double dist(size_t i, size_t j) ////distance entre les astres i et j
 	  {
-		  if(i<y.size()/4 && j<y.size()/4)
+		  if(i<3 && j<3)
 		  {
-			return sqrt((y[ix(i)]-y[ix(j)])*(y[ix(i)]-y[ix(j)]) + (y[iy(i)]-y[iy(j)])*(y[iy(i)]-y[iy(j)]));
+			//return sqrt((y[ix(i)]-y[ix(j)])*(y[ix(i)]-y[ix(j)]) + (y[iy(i)]-y[iy(j)])*(y[iy(i)]-y[iy(j)]));
+			std::valarray<double> vect_dist1 = (y[std::slice(ix(i), 2, 1)] );
+			std::valarray<double> vect_dist2 = (y[std::slice(ix(j), 2, 1)]);
+			double distance = norm(vect_dist1 - vect_dist2);
+			return distance;
 		}
 		else
 		{
