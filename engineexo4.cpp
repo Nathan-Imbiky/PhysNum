@@ -23,10 +23,11 @@ private:
 
   double G, mA, d, r0, v0, h, mT, mL, rho_0, R_T, lambda, Cx, dTL, R_L;         // accélération gravitationnelle, masse, longueur, fréquence angulaire, rayon, coefficient de frottement
 
-  bool adaptative = false;
+  bool adaptative = true;
   bool atmosphere = false;
   std::valarray<double> y;
-  double tol_adapt = 1e-4;
+  double tol_adapt = 1e-16;
+  unsigned int counter=0;
 
   double t;  // Temps courant pas de temps
   double tf;          // Temps final
@@ -200,7 +201,7 @@ double rho()
 	if(adaptative)
 	{
 		double dt_morph = dt;
-		double change_rate = 0.99;
+		double change_rate = 0.95;
 		std::valarray<double> yA =0*y;
 		std::valarray<double> yB =0*y;
 		int n=0;
@@ -208,9 +209,12 @@ double rho()
 			++n;
 			yA = rk4step(dt_morph, y);
 			yB =rk4step(dt_morph/2, rk4step(dt_morph/2, y));
+			
 			dt_morph *= change_rate*pow(tol_adapt/norm(yA-yB), 1/(n+1));
+			//cout<<n<<endl;
 		}while(norm(yA-yB)>tol_adapt);
 		sizestep = dt_morph/(change_rate*pow(tol_adapt/norm(yA-yB), 1/(n+1)));
+		y = rk4step(sizestep, y);
 	}
 	else
 	{
@@ -293,12 +297,15 @@ public:
       {
         step();
         printOut(false);
+       // cout<<"ntm"<<endl;
+       ++counter;
       }
       printOut(true);
       if(checkCollisions())
       {
 		  std::cout<<"Erreur : Collision"<<endl;
 	  }
+	  cout<<"Counter : "<<counter<<endl;
     };
 };
 

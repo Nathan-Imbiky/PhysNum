@@ -49,7 +49,7 @@ input_parameters = {
     'x1': r0,
     'x2':0.0,
     'x3':dTL,
-    'y1': 0,
+    'y1': 0.0,
     'y2':0.0,
     'y3':0,
     'vx1': -vr,
@@ -58,7 +58,7 @@ input_parameters = {
     'vy1': vt,
     'vy2':0.0,
     'vy3':0.0,
-    'sampling': 5
+    'sampling': 1
 }
 
 # -------------------------------------------------
@@ -67,7 +67,7 @@ input_parameters = {
 
 paramstr = 'nsteps' # The parameter to scan, must be one of the keys in input_parameters
 
-variable_array = 2**np.arange(22, 24)  # Example values for the parameter scan
+variable_array = 2**np.arange(3, 4)  # Example values for the parameter scan
 
 
 outstr = f"pendulum_x1_{input_parameters['x1']:.2g}_y1_{input_parameters['y1']:.2g}_vx1_{input_parameters['vx1']:.2g}_vy1_{input_parameters['vy1']:.2g}"

@@ -1,46 +1,64 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy
 from matplotlib.collections import LineCollection
 import os
 import glob
 import re
 import math
-from scipy.signal import find_peaks
+
+G = 6.674*1e-11
+mA = 8500
+d = 5.02
+r0 = 314159*1e3
+v0 = 1.2*1e3
+h = 10000
+mT = 5.972e24
+mL = 7.3477e22*1e-14
+rho_0 = 1.2
+R_T =6378.1e3
+lambd = 7238.2
+Cx = 0.3
+dTL = 384748e3
+R_L = 1737.4e3
+    
+vmax = np.sqrt(v0**2 + 2*G*mT*((1/(h+R_T))-(1/r0)))
+vt = (vmax*(h+R_T))/r0
+vr = np.sqrt(v0**2-vt**2)
+
+#*outputFile << t << " " << y[ix(0)] << " " << y[iy(0)] << " " << y[ivx(0)] << " " << y[ivy(0)] <<" " << emec << " " << pnc <<" "<<quantite_mvmt[0]<<" "<<quantite_mvmt[1]<<endl;
 
 # ============================================================
 # USER SETTINGS
 # ============================================================
 
-folder = r"/home/imbiky/Desktop/MyFiles/PhysNum/Exercise2_student/rotatingpendulum/problème/Scan_r_pendulum_kappa_0.01_r_1_Omega_7" #n0 outputs ?
+folder = r"Scan_nsteps_pendulum_x1_3.1e+08_y1_0_vx1_-1.2e+03_vy1_2.3e+02"
 
 plot_layout = {
-    "theta_time": False,
-    "phase_space": False,
-    "energy": False,
+    "theta_time": True,
+    "x_y": True,
+    "energy": True,
     "real_space": False,
     "power": True,
-    "energy_balance": False,
-    "dt":True,
-    "delta_theta":True,
-    "Poincare":False
+    "vmax" : True,
+    "energy_balance": True
 }
 
 # ============================================================
 # Output folder
 # ============================================================
 
-fig_dir = os.path.join(folder, "figures") #n1 pathjoin
-os.makedirs(fig_dir, exist_ok=True) #n2 exist_ok
+fig_dir = os.path.join(folder, "figures")
+os.makedirs(fig_dir, exist_ok=True)
 
 # ============================================================
 # Scan files
 # ============================================================
+
 files = sorted(glob.glob(os.path.join(folder, "*.txt")))
 
 datasets = []
 param_values = []
-param_name = None #n3 comment ça none
+param_name = None
 
 for f in files:
 
@@ -70,7 +88,7 @@ datasets = [datasets[i] for i in order]
 
 def colored_line(x, y, t, ax, vmin=None, vmax=None):
 
-    points = np.array([x, y]).T.reshape(-1,1,2) #n4 comment ça -1 eft jcomprends pas la question
+    points = np.array([x, y]).T.reshape(-1,1,2)
     segments = np.concatenate([points[:-1], points[1:]], axis=1)
 
     lc = LineCollection(segments, cmap='viridis')
@@ -97,7 +115,7 @@ tmax = max(data[:,0].max() for data in datasets)
 # Axis layout helper
 # ============================================================
 
-def get_axes(plot_key, title): #n5 rien compris
+def get_axes(plot_key, title):
 
     if plot_layout[plot_key]:
 
@@ -125,79 +143,101 @@ def get_axes(plot_key, title): #n5 rien compris
     return fig, axes
 
 
-cmap = plt.get_cmap("tab10") #n6 c qui la colored map ptn
-plt.rcParams['font.size'] = 12
-plt.rcParams['legend.fontsize'] = 12
+cmap = plt.get_cmap("tab10")
+
+#//////////////////////hmin et vmax, pmax et accmax, dTL p et em, x vs y
+
+
 
 # ============================================================
-# Plot 1 : theta vs time
-# ============================================================
-thetamax = 0.;
-thetaindex = 0.;
-
-fig, axes = get_axes("theta_time", "Angle vs time")
-
-for i,data in enumerate(datasets):
-
-    t = data[:,0]
-    theta = (data[:,1] + np.pi)%(2*np.pi) - np.pi
-    
-    if(thetamax<np.max(theta)) :
-        thetamax = np.max(theta)
-        thetaindex=param_values[i]
-
-    color = cmap(i % 10)
-
-    axes[i].plot(t, theta, color=color,
-                 label=f"{param_name}={param_values[i]}")
-
-    axes[i].set_xlabel("t")
-    axes[i].set_ylabel("theta")
-    axes[i].grid()
-
-    if not plot_layout["theta_time"]:
-        axes[i].set_title(f"{param_name} = {param_values[i]}")
-
-if plot_layout["theta_time"]:
-    axes[0].legend()
-
-fig.savefig(os.path.join(fig_dir,"theta_vs_time_all.png"), dpi=300)
-
-print("thetamax :", thetamax)
-print("Omega :", thetaindex)
-
-# ============================================================
-# Plot 2 : phase space
+# Plot 1 : hmin vs dt
 # ============================================================
 
-fig, axes = get_axes("phase_space", "Phase space")
+fig, axes = get_axes("x_y", "hmin")
 
 lc_ref = None
 
+hmin = []
+vmaxx = []
+
 for i,data in enumerate(datasets):
 
-    t = data[:,0]
-    theta = (data[:,1] + np.pi)%(2*np.pi) - np.pi
-    thetadot = data[:,2]
+    x = data[:,1] 
+    y = data[:,2]
+    vx = data[:,3] 
+    vy = data[:,4]
+    
+    h = 10000
+    hneu = np.sqrt(x**2+y**2) -R_T
+    vneu = np.sqrt(vx**2+vy**2)
+    
+    hmin.append(np.min(hneu))
+    vmaxx.append(np.max(vneu))
 
-    lc = colored_line(theta, thetadot, t, axes[i], tmin, tmax)
-
-    axes[i].set_xlabel("theta")
-    axes[i].set_ylabel("thetadot")
-    axes[i].grid()
-
-    if not plot_layout["phase_space"]:
-        axes[i].set_title(f"{param_name} = {param_values[i]}")
-
-    if lc_ref is None:
-        lc_ref = lc
-
-cbar = fig.colorbar(lc_ref, ax=axes)
-cbar.set_label("time")
-
-fig.savefig(os.path.join(fig_dir,"phase_space_all.png"), dpi=300)
+axes[0].plot(param_values, hmin, color='r', linestyle='-', marker = 'x', label="hmin numérique")
+plt.axhline(h, color='k', linestyle='--', label="hmin exact")
 
 
+
+
+axes[0].set_ylabel("hmin")
+axes[0].set_xlabel(f"{param_name}")
+axes[0].grid()
+
+
+
+fig.savefig(os.path.join(fig_dir,"hmin.png"), dpi=300)
+
+h_err = np.abs(1 - np.array(hmin) / h)
+
+plt.figure()
+plt.plot(param_values**(-1), h_err, 'r+-', label="hmin numérique")
+plt.loglog(param_values**(-1), param_values**(-1), 'k--', label="O(dt)")
+plt.loglog(param_values**(-1), param_values**(-2), 'k-.', label="O(dt^2)")
+plt.xlabel(r"dt")
+plt.ylabel(r"hmin")
+plt.xscale('log')
+#plt.ylim(0, tf/10)  # Set y-limits to focus on the relevant range
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.savefig(os.path.join(fig_dir,"hmin_conv.png"), dpi=300)
+
+
+# ============================================================
+# Plot 2 : vmax vs dt
+# ============================================================
+
+plt.figure()
+
+plt.plot(param_values, vmaxx, color='r', linestyle='-', marker = 'x', label="vmax numérique")
+plt.axhline(vmax, color='k', linestyle='--', label="hmin exact")
+
+
+
+
+plt.ylabel("vmax")
+plt.xlabel(f"{param_name}")
+plt.grid()
+
+
+
+plt.savefig(os.path.join(fig_dir,"vmax.png"), dpi=300)
+
+v_err = np.abs(1 - np.array(vmaxx) / vmax)
+
+plt.figure()
+plt.plot(param_values**(-1), v_err, 'r+-', label="vmax numérique")
+plt.loglog(param_values**(-1), param_values**(-1), 'k--', label="O(dt)")
+plt.loglog(param_values**(-1), param_values**(-2), 'k-.', label="O(dt^2)")
+plt.xlabel(r"dt")
+plt.ylabel(r"vmax")
+plt.xscale('log')
+#plt.ylim(0, tf/10)  # Set y-limits to focus on the relevant range
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.savefig(os.path.join(fig_dir,"vmax_conv.png"), dpi=300)
 # ============================================================
 # Plot 3 : energy
 # ============================================================
@@ -208,16 +248,11 @@ for i,data in enumerate(datasets):
 
     t = data[:,0]
     E = data[:,3]
-    moyenne = np.mean(E)*np.ones(len(E))
 
     color = cmap(i % 10)
 
     axes[i].plot(t, E, color=color,
                  label=f"{param_name}={param_values[i]}")
-                 
-                 
-    axes[i].plot(t, moyenne, color=color, linestyle ="--",
-                 label=f"{param_name} avg={param_values[i]}")
 
     axes[i].set_xlabel("t")
     axes[i].set_ylabel("Energy")
@@ -245,10 +280,8 @@ lc_ref = None
 for i,data in enumerate(datasets):
 
     t = data[:,0]
-    theta = (data[:,1] + np.pi)%(2*np.pi) - np.pi
-
-    x = L*np.sin(theta)
-    y = -L*np.cos(theta)
+    x = data[:,1]
+    y = data[:, 2]
 
     lc = colored_line(x, y, t, axes[i], tmin, tmax)
 
@@ -327,88 +360,6 @@ if plot_layout["energy_balance"]:
     axes[0].legend()
 
 fig.savefig(os.path.join(fig_dir,"energy_balance_all.png"), dpi=300)
-
-
-# ============================================================
-# Plot 7 : system period
-# ============================================================
-medio = []
-T = []
-
-
-for data in datasets :
-    medio.append(data[:,0:2])
-   
-    
-    peaks, _ = find_peaks(medio[-1][:,1])
-    periods = np.diff(medio[-1][:,0][peaks])
-    print(periods)
-
-    #print(store_period)
-    T.append(np.mean(periods))
-
-
-
-#print(T)
-
-fig, axes = get_axes("dt", "Période T")
-#Plot theoric value //////////////////////////////////
-
-dt = []
-for data in datasets :
-    dt.append(2/len(data[:,0]))
-    
-arg = np.arange(1e-8, np.pi, 0.01)
-    
-val = 4*np.sqrt(0.2/9.81)*scipy.special.ellipk(np.sin(arg/2.)**2)
-#val = val_th*np.ones(len(dt))
-#val th de base c'est 2pi/sqrt(g/L)
-
-print(val)
-print(T)
-
-    
-axes[0].plot(param_values, T, linestyle='', marker='o', color="red", label=u"T(θ0)")
-axes[0].plot(arg, val, linestyle='--', marker=None, color="black", label="Valeur théorique")
-axes[0].set_xlabel(u"θ initial")
-axes[0].set_ylabel("Période")
-axes[0].legend()
-axes[0].grid()
-
-
-fig.savefig(os.path.join(fig_dir,"Period.png"), dpi=300)
-	
-# ============================================================
-# Plot 8 : linlog
-# ============================================================
-fig, axes = get_axes("delta_theta", "Difference in theta")
-
-check = False #True pour la question c.iii uniquement, autrement erreurs
-
-if check : 
-
-        t = datasets[0][:,0]
-        theta = np.abs((datasets[1][:,1]- datasets[0][:,1]+ np.pi)%(2*np.pi) - np.pi)
-    
-    
-
-        color = 'blue'
-
-        axes[0].plot(t, theta, color=color, linestyle='--',
-                     label=f"{param_name}={param_values[0]}")
-                 
-        axes[0].set_yscale('log')
-        axes[0].set_xlabel("t")
-        axes[0].set_ylabel(u"Δθ")
-        axes[0].grid()
-
-        if not plot_layout["delta_theta"]:
-            axes[0].set_title(f"{param_name} = {param_values[0]}")
-
-        if plot_layout["delta_theta"]:
-            axes[0].legend()
-
-        fig.savefig(os.path.join(fig_dir,"delta_theta.png"), dpi=300)
 
 
 plt.show()
