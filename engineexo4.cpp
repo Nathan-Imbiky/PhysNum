@@ -23,7 +23,7 @@ private:
 
   double G, mA, d, r0, v0, h, mT, mL, rho_0, R_T, lambda, Cx, dTL, R_L;         // accélération gravitationnelle, masse, longueur, fréquence angulaire, rayon, coefficient de frottement
 
-  bool adaptative = true;
+  bool adaptative = false;
   bool atmosphere = false;
   std::valarray<double> y;
   double tol_adapt = 1e-8;
@@ -51,7 +51,13 @@ private:
     {
       double emec = Emec(y, t); // TODO: Evaluer l'energie mecanique
       double pnc = Pnonc(y, t); // TODO: Evaluer la puissance des forces non conservatives
-      *outputFile << t << " " << y[ix(0)] << " " << y[iy(0)] << " " << y[ivx(0)] << "" << y[ivy(0)] <<"" << emec << " " << pnc << endl;
+      //double hmin = hmin();
+      //double vmax = vmax();
+      //double pmax = pmax();
+      //double accmax = accmax();
+      //double dTL = d_T_L();
+      std::valarray<double> quantite_mvmt = momentum(y, t);
+      *outputFile << t << " " << y[ix(0)] << " " << y[iy(0)] << " " << y[ivx(0)] << " " << y[ivy(0)] <<" " << emec << " " << pnc <<" "<<quantite_mvmt[0]<<" "<<quantite_mvmt[1]<<endl;
       last = 1;
     }
     else
@@ -70,12 +76,14 @@ private:
   {
       double K =(1/2.0)*(mA*(y[ivx(0)]*y[ix(0)]) + mT*(y[ivx(1)]*y[ivx(1)]) + mL*(y[ivx(2)]*y[ivx(2)]));
       double U = -G*( mA*mT/( dist(0, 1) ) + mA*mL/( dist(0, 2) ) + mL*mT/( dist(1, 2) ));
+      cout<<K<<"K, "<<U<<"U"<<endl;
+      cout<<dist(0,1)<<"Terre Artémis, "<<dist(0, 2)<<"Lune Artémis, "<<dist(1, 2)<<"Terre Lune"<<endl;
       return  K + U;
   }
   
 	  double dist(size_t i, size_t j) ////distance entre les astres i et j
 	  {
-		  if(i<y.size()/6 && j<y.size()/6)
+		  if(i<y.size()/4 && j<y.size()/4)
 		  {
 			return sqrt((y[ix(i)]-y[ix(j)])*(y[ix(i)]-y[ix(j)]) + (y[iy(i)]-y[iy(j)])*(y[iy(i)]-y[iy(j)]));
 		}
@@ -311,5 +319,5 @@ int main(int argc, char* argv[])
   cout << "Fin de la simulation." << endl;
   return 0;
 }
-printOut, print hmin et vmax, jspquoi d'autre mais au moins tt ça qui reste ;
+//printOut, print hmin et vmax, print pmax et accmax, dTL p et em jspquoi d'autre mais au moins tt ça qui reste ;
 
