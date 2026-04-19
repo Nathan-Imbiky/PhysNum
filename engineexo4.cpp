@@ -23,10 +23,10 @@ private:
 
   double G, mA, d, r0, v0, h, mT, mL, rho_0, R_T, lambda, Cx, dTL, R_L;         // accélération gravitationnelle, masse, longueur, fréquence angulaire, rayon, coefficient de frottement
 
-  bool adaptative = true;
+  bool adaptative = false;
   bool atmosphere = false;
   std::valarray<double> y;
-  double tol_adapt = 1e-16;
+  double tol_adapt;
   unsigned int counter=0;
 
   double t;  // Temps courant pas de temps
@@ -76,13 +76,14 @@ private:
   double Emec(std::valarray<double> const& y, double t_)
   {
       double K =(1/2.0)*(mA*(y[ivx(0)]*y[ivx(0)] + y[ivy(0)]*y[ivy(0)]) + mT*(y[ivx(1)]*y[ivx(1)] + y[ivy(1)]*y[ivy(1)]) + mL*(y[ivx(2)]*y[ivx(2)] + y[ivy(2)]*y[ivy(2)]));
-      double U = -G*( mA*mT/( dist(0, 1) ) + mA*mL/( dist(0, 2) ) + mL*mT/( dist(1, 2) ));
+      double U = -G*( mA*mT/( dist(0, 1, y) ) + mA*mL/( dist(0, 2, y) ) + mL*mT/( dist(1, 2, y) ));
       //cout<<K<<"K, "<<U<<"U"<<endl;
       //cout<<dist(0,1)<<"Terre Artémis, "<<dist(0, 2)<<"Lune Artémis, "<<dist(1, 2)<<"Terre Lune"<<endl;
       return  K + U;
   }
   
-	  double dist(size_t i, size_t j) ////distance entre les astres i et j
+	  double dist(size_t i, size_t j,
+            std::valarray<double> const& y) ////distance entre les astres i et j
 	  {
 		  if(i<3 && j<3)
 		  {
@@ -124,7 +125,7 @@ double S() //Surface sectionnelle de la sonde
 
 double rho()
 {
-	return rho_0*exp(-(dist(0, 1)-R_T)/lambda);
+	return rho_0*exp(-(dist(0, 1, y)-R_T)/lambda);
 }
 
   // TODO definir la puissance des forces non conservatives (trainée de l'air) sur la sonde 
@@ -154,7 +155,7 @@ double rho()
 		  double F=0.0;
 		  if(i<3 && j<3 && i!=j)
 		  {
-			F-= G*mass(j)*(y[ix(i)]-y[ix(j)])/(dist(i, j)*dist(i, j)*dist(i, j));
+			F-= G*mass(j)*(y[ix(i)]-y[ix(j)])/(dist(i, j, y)*dist(i, j, y)*dist(i, j, y));
 		}
 		if(atmosphere && i==0 && j==1)
 		{
@@ -168,7 +169,7 @@ double rho()
 		  double F = 0.0;
 		  if(i<3 && j<3 && i!=j)
 		  {
-			F-= G*mass(j)*(y[iy(i)]-y[iy(j)])/(dist(i, j)*dist(i, j)*dist(i, j));
+			F-= G*mass(j)*(y[iy(i)]-y[iy(j)])/(dist(i, j, y)*dist(i, j, y)*dist(i, j, y));
 			//if(F>1e-2){cout<<F<<" and "<<(y[iy(i)]-y[iy(j)])<<endl;}
 		}
 		if(atmosphere && i==0 && j==1)
@@ -210,10 +211,10 @@ double rho()
 			yA = rk4step(dt_morph, y);
 			yB =rk4step(dt_morph/2, rk4step(dt_morph/2, y));
 			
-			dt_morph *= change_rate*pow(tol_adapt/norm(yA-yB), 1/(n+1));
+			dt_morph *= change_rate*pow(tol_adapt/norm(yA-yB), 1/(5.0));
 			//cout<<n<<endl;
 		}while(norm(yA-yB)>tol_adapt);
-		sizestep = dt_morph/(change_rate*pow(tol_adapt/norm(yA-yB), 1/(n+1)));
+		sizestep = dt_morph/(change_rate*pow(tol_adapt/norm(yA-yB), 1/(5.0)));
 		y = rk4step(sizestep, y);
 	}
 	else
@@ -226,7 +227,7 @@ double rho()
 
 bool checkCollisions()
 {
-	return (dist(0,1)<= R_T + (d/2)) || (dist(0, 2) <= R_L + (d/2)) || (dist(1, 2) <= R_L + R_T);
+	return (dist(0,1, y)<= R_T + (d/2)) || (dist(0, 2, y) <= R_L + (d/2)) || (dist(1, 2, y) <= R_L + R_T);
 }
 
 
@@ -250,6 +251,7 @@ public:
       lambda = configFile.get<double>("lambda", lambda);
       Cx = configFile.get<double>("Cx", Cx);
       dTL = configFile.get<double>("dTL", dTL);  
+      tol_adapt = configFile.get<double>("epsilon", tol_adapt);
       
       sizestep = 0.0;
       
