@@ -123,7 +123,7 @@ double S() //Surface sectionnelle de la sonde
 	return (pi*d*d)/4;
 }
 
-double rho()
+double rho(std::valarray<double> const& y)
 {
 	return rho_0*exp(-(dist(0, 1, y)-R_T)/lambda);
 }
@@ -131,7 +131,7 @@ double rho()
   // TODO definir la puissance des forces non conservatives (trainée de l'air) sur la sonde 
   double Pnonc(std::valarray<double> const& y, double t_)
   {
-      return -(rho()*S()*Cx*pow(norm(y[std::slice(ivx(0), 2, 1)] - y[std::slice(ivx(1), 2, 1)]), 3))/2;
+      return -(rho(y)*S()*Cx*pow(norm(y[std::slice(ivx(0), 2, 1)] - y[std::slice(ivx(1), 2, 1)]), 3))/2;
   }
   
   double mass(size_t i) ////helper associant la masse d'un astre à son numéro
@@ -159,7 +159,7 @@ double rho()
 		}
 		if(atmosphere && i==0 && j==1)
 		{
-			F-= (rho()*S()*Cx*norm(y[std::slice(ivx(0), 2, 1)] - y[std::slice(ivx(1), 2, 1)])*(y[ivx(0)] - y[ivx(1)]))/(2*mass(i));
+			F-= (rho(y)*S()*Cx*norm(y[std::slice(ivx(0), 2, 1)] - y[std::slice(ivx(1), 2, 1)])*(y[ivx(0)] - y[ivx(1)]))/(2*mass(i));
 		}
 		return F;
 	  }
@@ -174,7 +174,7 @@ double rho()
 		}
 		if(atmosphere && i==0 && j==1)
 		{
-			F-=(rho()*S()*Cx*norm(y[std::slice(ivx(0), 2, 1)] - y[std::slice(ivx(1), 2, 1)])*(y[ivy(0)] - y[ivy(1)]))/(2*mass(i));
+			F-=(rho(y)*S()*Cx*norm(y[std::slice(ivx(0), 2, 1)] - y[std::slice(ivx(1), 2, 1)])*(y[ivy(0)] - y[ivy(1)]))/(2*mass(i));
 		}
 		
 		return F;
