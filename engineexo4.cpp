@@ -21,8 +21,9 @@ private:
 
   // definition des variables
 
-  double G, mA, d, r0, v0, h, mT, mL, rho_0, R_T, lambda, Cx, dTL, R_L;         // accélération gravitationnelle, masse, longueur, fréquence angulaire, rayon, coefficient de frottement
-
+  double G, mA, d, r0, v0, h, mT, mL, rho_0, R_T, lambda, Cx, dTL, R_L, theta;         // accélération gravitationnelle, masse, longueur, fréquence angulaire, rayon, coefficient de frottement
+  double dt_morph;
+  
   bool adaptative = false;
   bool atmosphere = false;
   std::valarray<double> y;
@@ -58,7 +59,7 @@ private:
       //double accmax = accmax();
       //double dTL = d_T_L();
       std::valarray<double> quantite_mvmt = momentum(y, t);
-      *outputFile << t << " " << y[ix(0)] << " " << y[iy(0)] << " " << y[ivx(0)] << " " << y[ivy(0)] <<" " << emec << " " << pnc <<" "<<quantite_mvmt[0]<<" "<<quantite_mvmt[1]<<endl;
+      *outputFile << t << " " << y[ix(0)] << " " << y[iy(0)] << " " << y[ivx(0)] << " " << y[ivy(0)] <<" " << emec << " " << pnc <<" "<<quantite_mvmt[0]<<" "<<quantite_mvmt[1]<<" "<<sizestep<<" "<<instacc(y, t)<< " " << y[ix(1)] << " " << y[iy(1)]<< " " << y[ix(2)] << " " << y[iy(2)]<<endl;
       last = 1;
     }
     else
@@ -201,8 +202,7 @@ double rho(std::valarray<double> const& y)
   {
 	if(adaptative)
 	{
-		double dt_morph = dt;
-		double change_rate = 0.95;
+		double change_rate = 0.99;
 		std::valarray<double> yA =0*y;
 		std::valarray<double> yB =0*y;
 		int n=0;
@@ -211,17 +211,16 @@ double rho(std::valarray<double> const& y)
 			yA = rk4step(dt_morph, y);
 			yB =rk4step(dt_morph/2, rk4step(dt_morph/2, y));
 			
-			dt_morph *= change_rate*pow(tol_adapt/norm(yA-yB), 1/(5.0));
+			if(norm(yA-yB)>=1e-20){dt_morph *= change_rate*pow(tol_adapt/norm(yA-yB), 1.0/(5.0));}
 			//cout<<n<<endl;
 		}while(norm(yA-yB)>tol_adapt);
-		sizestep = dt_morph/(change_rate*pow(tol_adapt/norm(yA-yB), 1/(5.0)));
-		y = rk4step(sizestep, y);
+		sizestep = dt_morph;
 	}
 	else
 	{
 		sizestep = dt;
-		y = rk4step(dt, y);
 	}
+	y = rk4step(sizestep, y);
     t += sizestep;
   }
 
@@ -252,6 +251,7 @@ public:
       Cx = configFile.get<double>("Cx", Cx);
       dTL = configFile.get<double>("dTL", dTL);  
       tol_adapt = configFile.get<double>("epsilon", tol_adapt);
+      theta = configFile.get<double>("theta", theta);
       
       sizestep = 0.0;
       
@@ -278,6 +278,7 @@ public:
       outputFile->precision(15);
       
       dt = tf/nsteps_per;
+      dt_morph = dt;
       numBodies = y.size()/4;
     };
 

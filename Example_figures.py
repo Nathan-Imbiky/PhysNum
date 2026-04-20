@@ -31,16 +31,20 @@ vr = np.sqrt(v0**2-vt**2)
 # USER SETTINGS
 # ============================================================
 
-folder = r"Scan_nsteps_pendulum_x1_3.1e+08_y1_0_vx1_-1.2e+03_vy1_2.3e+02"
+folder = r"Scan_theta_pendulum_x1_-3.1e+08_y1_0_vx1_1.2e+03_vy1_2.4e+02"
 
 plot_layout = {
     "theta_time": True,
     "x_y": True,
-    "energy": True,
+    "energy": False,
     "real_space": False,
     "power": True,
     "vmax" : True,
-    "energy_balance": True
+    "energy_balance": True,
+    "dist" : False,
+    "moonnearth" : False,
+    "momentum" : False,
+    "dTL": False
 }
 
 # ============================================================
@@ -166,9 +170,11 @@ for i,data in enumerate(datasets):
     y = data[:,2]
     vx = data[:,3] 
     vy = data[:,4]
+    xT = data[:,11]
+    yT = data[:,12]
     
     h = 10000
-    hneu = np.sqrt(x**2+y**2) -R_T
+    hneu = np.sqrt((x-xT)**2+(y-yT)**2) -R_T
     vneu = np.sqrt(vx**2+vy**2)
     
     hmin.append(np.min(hneu))
@@ -192,9 +198,9 @@ h_err = np.abs(1 - np.array(hmin) / h)
 
 plt.figure()
 plt.plot(param_values**(-1), h_err, 'r+-', label="hmin numérique")
-plt.loglog(param_values**(-1), param_values**(-1), 'k--', label="O(dt)")
-plt.loglog(param_values**(-1), param_values**(-2), 'k-.', label="O(dt^2)")
-plt.xlabel(r"dt")
+plt.loglog(param_values**(-1), param_values**(-1), 'k--', label=f"O({param_name})")
+plt.loglog(param_values**(-1), param_values**(-2), 'k-.', label=f"O({param_name}^2)")
+plt.xlabel(f"{param_name}^-1")
 plt.ylabel(r"hmin")
 plt.xscale('log')
 #plt.ylim(0, tf/10)  # Set y-limits to focus on the relevant range
@@ -228,9 +234,9 @@ v_err = np.abs(1 - np.array(vmaxx) / vmax)
 
 plt.figure()
 plt.plot(param_values**(-1), v_err, 'r+-', label="vmax numérique")
-plt.loglog(param_values**(-1), param_values**(-1), 'k--', label="O(dt)")
-plt.loglog(param_values**(-1), param_values**(-2), 'k-.', label="O(dt^2)")
-plt.xlabel(r"dt")
+plt.loglog(param_values**(-1), param_values**(-1), 'k--', label=f"O({param_name})")
+plt.loglog(param_values**(-1), param_values**(-2), 'k-.', label=f"O({param_name}^2)")
+plt.xlabel(f"{param_name}^-1")
 plt.ylabel(r"vmax")
 plt.xscale('log')
 #plt.ylim(0, tf/10)  # Set y-limits to focus on the relevant range
@@ -247,7 +253,7 @@ fig, axes = get_axes("energy", "Energy evolution")
 for i,data in enumerate(datasets):
 
     t = data[:,0]
-    E = data[:,3]
+    E = data[:,5]
 
     color = cmap(i % 10)
 
@@ -266,9 +272,142 @@ if plot_layout["energy"]:
 
 fig.savefig(os.path.join(fig_dir,"energy_all.png"), dpi=300)
 
+# ============================================================
+# Plot 4 : t vs distance à la terre et dt
+# ============================================================
+fig, axes = get_axes("dist", "Comparaison")
+
+lc_ref = None
+
+for i,data in enumerate(datasets):
+
+    t = data[:,0]
+    x = data[:,1]
+    y = data[:, 2]
+    
+    dist = np.sqrt(x**2 + y**2) - R_T
+    
+    stepsize = data[:, 9]
+
+    #lc = colored_line(x, y, t, axes[i], tmin, tmax)
+    
+    axes[0].plot(t, dist, color="red",
+                 label="Distance à la terre")
+                 
+    axes[1].plot(t, stepsize, color="blue",
+                 label="Taille de dt")
+
+
+
+    axes[0].set_xlabel("t")
+    axes[0].set_ylabel("Distance à la Terre")
+    
+    axes[1].set_xlabel("t")
+    axes[1].set_ylabel("Valeur de dt")
+
+    if not plot_layout["dist"]:
+        axes[i].set_title(f"{param_name} = {param_values[i]}")
+
+   # if lc_ref is None:
+      #  lc_ref = lc
+
+#cbar = fig.colorbar(lc_ref, ax=axes)
+#cbar.set_label("time")
+
+fig.savefig(os.path.join(fig_dir,"dist.png"), dpi=300)
+
 
 # ============================================================
-# Plot 4 : real space trajectory
+# Plot 5 : Pmax et Amax
+# ============================================================
+pmax = []
+amax = []
+
+for i,data in enumerate(datasets):
+
+    pnonc = data[:,9] 
+    acc = data[:,10]
+    
+    
+    
+    
+    pmax.append(np.max(pnonc))
+    amax.append(np.max(acc))
+
+plt.figure()
+
+plt.plot(param_values, amax, color='r', linestyle='-', marker = 'x', label="acc max numérique")
+#plt.axhline(vmax, color='k', linestyle='--', label="amax exact")
+
+
+
+
+plt.ylabel("acc max")
+plt.xlabel(f"{param_name}")
+plt.grid()
+
+
+
+plt.savefig(os.path.join(fig_dir,"amax.png"), dpi=300)
+
+#a_temp = [0] + amax
+#amax.append(0)
+
+#a_err = np.abs(1 - np.array(amax) / np.array(a_temp))
+
+#a_err = np.delete(a_err, -1)
+
+#plt.figure()
+#plt.plot(param_values**(1), a_err, 'r+-', label="amax numérique")
+#plt.loglog(param_values**(1), param_values**(1), 'k--', label=f"O({param_name})")
+#plt.loglog(param_values**(1), param_values**(2), 'k-.', label=f"O({param_name}^2)")
+#plt.xlabel(f"{param_name}")
+#plt.ylabel(r"amax")
+#plt.xscale('log')
+#plt.ylim(0, tf/10)  # Set y-limits to focus on the relevant range
+#plt.grid(True)
+#plt.legend()
+#plt.tight_layout()
+#plt.savefig(os.path.join(fig_dir,"amax_conv.png"), dpi=300)
+
+#plt.figure()
+
+#plt.plot(param_values, pmax, color='r', linestyle='-', marker = 'x', label="Pmax numérique")
+#plt.axhline(vmax, color='k', linestyle='--', label="Pmax exact")
+
+
+
+
+#plt.ylabel("Pmax")
+#plt.xlabel(f"{param_name}")
+#plt.grid()
+
+
+
+#plt.savefig(os.path.join(fig_dir,"pmax.png"), dpi=300)
+
+#p_temp = [0] + pmax
+#pmax.append(0)
+
+#p_err = np.abs(1 - np.array(pmax) / np.array(p_temp))
+
+#p_err = np.delete(p_err, -1)
+
+#plt.figure()
+#plt.plot(param_values**(1), p_err, 'r+-', label="Pmax numérique")
+#plt.loglog(param_values**(1), param_values**(1), 'k--', label=f"O({param_name})")
+#plt.loglog(param_values**(1), param_values**(2), 'k-.', label=f"O({param_name}^2)")
+#plt.xlabel(f"{param_name}")
+#plt.ylabel(r"Pmax")
+#plt.xscale('log')
+#plt.ylim(0, tf/10)  # Set y-limits to focus on the relevant range
+#plt.grid(True)
+#plt.legend()
+#plt.tight_layout()
+#plt.savefig(os.path.join(fig_dir,"pmax_conv.png"), dpi=300)
+
+# ============================================================
+# Plot 6 : real space trajectory
 # ============================================================
 
 L = 0.2
@@ -299,67 +438,127 @@ cbar.set_label("time")
 
 fig.savefig(os.path.join(fig_dir,"real_space_all.png"), dpi=300)
 
-
 # ============================================================
-# Plot 5 : power
+# Plot 7 : MoonNEarth
 # ============================================================
 
-fig, axes = get_axes("power", "Non-conservative power")
+L = 0.2
+
+fig, axes = get_axes("moonnearth", "System trajectory")
+
+lc_ref = None
 
 for i,data in enumerate(datasets):
 
     t = data[:,0]
-    Pnc = data[:,4]
+    xT = data[:,11]
+    yT = data[:,12]
+    xM = data[:,13]
+    yM = data[:, 14]
 
-    color = cmap(i % 10)
+    lc = colored_line(xT, yT, t, axes[i], tmin, tmax)
+    lc = colored_line(xM, yM, t, axes[i], tmin, tmax)
 
-    axes[i].plot(t, Pnc, color=color,
-                 label=f"{param_name}={param_values[i]}")
+    axes[i].set_xlabel("x")
+    axes[i].set_ylabel("y")
 
-    axes[i].set_xlabel("t")
-    axes[i].set_ylabel("Pnc")
-    axes[i].grid()
-
-    if not plot_layout["power"]:
+    if not plot_layout["moonnearth"]:
         axes[i].set_title(f"{param_name} = {param_values[i]}")
 
-if plot_layout["power"]:
-    axes[0].legend()
+    if lc_ref is None:
+        lc_ref = lc
 
-fig.savefig(os.path.join(fig_dir,"power_all.png"), dpi=300)
+cbar = fig.colorbar(lc_ref, ax=axes)
+cbar.set_label("time")
 
-
-# ============================================================
-# Plot 6 : energy balance
-# ============================================================
-
-fig, axes = get_axes("energy_balance", "Energy balance")
-
-for i,data in enumerate(datasets):
-
-    color = cmap(i % 10)
-
-    t = data[:,0]
-    E = data[:,3]
-    Pnc = data[:,4]
-
-    dEdt = np.gradient(E,t)
-
-    axes[i].plot(t, dEdt, linestyle='-', color=color, label="dE/dt")
-    axes[i].plot(t, Pnc, linestyle='--', color=color, label="Pnc")
-
-    axes[i].set_xlabel("t")
-    axes[i].set_ylabel("Power")
-    axes[i].grid()
-
-    if not plot_layout["energy_balance"]:
-        axes[i].set_title(f"{param_name} = {param_values[i]}")
-        axes[i].legend()
-
-if plot_layout["energy_balance"]:
-    axes[0].legend()
-
-fig.savefig(os.path.join(fig_dir,"energy_balance_all.png"), dpi=300)
-
+fig.savefig(os.path.join(fig_dir,"moonnearth.png"), dpi=300)
 
 plt.show()
+
+# ============================================================
+# Plot 8 : Momentum
+# ============================================================
+
+L = 0.2
+
+fig, axes = get_axes("momentum", "Variation de quantité de mouvement")
+
+lc_ref = None
+
+for i,data in enumerate(datasets):
+
+    t = data[:,0]
+    px = data[:,7]
+    py = data[:,8]
+    
+    p0 = np.sqrt(px[0]**2 + py[0]**2)
+    
+    p_err = np.sqrt((np.array(px)-px[0])**2 + (np.array(py)-py[0])**2)/p0
+    
+
+
+
+    #axes[i].plot(t, px, color='r', label='px')
+    #axes[i].plot(t, py, color='b', label='py')
+    axes[i].plot(t, p_err, color='b', label='Delta p')
+    axes[i].set_xlabel("t")
+    axes[i].set_ylabel("p deviation")
+
+    if not plot_layout["momentum"]:
+        axes[i].set_title(f"{param_name} = {param_values[i]}")
+
+ #   if lc_ref is None:
+ #       lc_ref = lc
+
+
+
+fig.savefig(os.path.join(fig_dir,"momentum.png"), dpi=300)
+
+# ============================================================
+# Plot 8 : dTL
+# ============================================================
+
+fig, axes = get_axes("dTL", "Distance Terre-Lune")
+
+lc_ref = None
+
+for i,data in enumerate(datasets):
+
+    t = data[:,0]
+    xT = data[:,11]
+    yT = data[:,12]
+    xM = data[:,13]
+    yM = data[:, 14]
+
+    dTL = np.sqrt((xM-xT)**2 + (yT-yM)**2)
+    
+    color = cmap(i % 10)
+    
+    axes[i].plot(t, dTL, color=color, label=f"{param_name}={param_values[i]}")
+
+    axes[i].set_ylabel("dTL")
+    axes[i].set_xlabel("t")
+
+    if not plot_layout["dTL"]:
+        axes[i].set_title(f"{param_name} = {param_values[i]}")
+        
+    if plot_layout["energy"]:
+    	axes[0].legend()
+
+
+    #if lc_ref is None:
+     #   lc_ref = lc
+
+
+
+fig.savefig(os.path.join(fig_dir,"dTL.png"), dpi=300)
+
+plt.show()
+
+
+
+
+
+
+
+
