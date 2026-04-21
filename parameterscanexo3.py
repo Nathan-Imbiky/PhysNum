@@ -4,7 +4,7 @@ import os
 
 # Parameters
 repertoire = ''
-executable = './enginetheta'
+executable = './engineexo4'
 input_filename = 'configuration.in.example' # Strictly no longer needed, but we keep it for now to avoid having to change the code in engine.cpp
 
 G = 6.674*1e-11
@@ -40,7 +40,7 @@ vL = omega*rL
 T = np.pi*2/omega
 
 input_parameters = {
-    'tf': 172800, # t final (overwritten if N >0)
+    'tf': 10*T, # t final (overwritten if N >0)
     'nsteps': 10000, # number of time steps per period (if N>0), number of timesteps total if N=0
     'G' : 6.674*1e-11, 
     'mA' :8500, 
@@ -49,7 +49,7 @@ input_parameters = {
     'v0' :1.2*1e3, 
     'h' :10000, 
     'mT' :5.972e24, 
-    'mL' :7.3477e22, 
+    'mL' :7.3477e22*1, 
     'rho_0' :1.2, 
     'R_T' :6378.1e3, 
     'lambda' :7238.2, 
@@ -59,16 +59,16 @@ input_parameters = {
     'epsilon' : 1e-6,
     'theta' : 0,
     
-    'x1': rT-r0,
+    'x1': 1e16,
     'x2':rT,
     'x3':-rL,
     'y1': 0,
     'y2':0.0,
     'y3':0,
-    'vx1': vr,
-    'vx2':0.0,
-    'vx3':0.0,
-    'vy1': vT + vt,
+    'vx1': 0,
+    'vx2':0,
+    'vx3':0,
+    'vy1': 0,
     'vy2':vT,
     'vy3':-vL,
     'sampling': 1
@@ -78,9 +78,14 @@ input_parameters = {
 
 # Updated from last time, the code below can now be used to scan any parameter, just make sure to update the paramstr and the variable_array accordingly
 
-paramstr = 'theta' # The parameter to scan, must be one of the keys in input_parameters
+paramstr = 'nsteps' # The parameter to scan, must be one of the keys in input_parameters
 
-variable_array = np.linspace(-0.1863195 -2e-8, -0.1863195-1.6e-8, 20)
+variable_array = 2.0**np.arange(3, 15)
+#np.linspace(2.95131 + 19e-7, 2.95131 + 20.2e-7, 20)
+#np.linspace(2.95131, 2.951313, 20)
+#np.linspace(2.95131 + 19e-7, 2.95131 + 20.2e-7, 20)
+#10.0**np.array([-8, -8])
+#np.linspace(-0.1863195 -2e-8, -0.1863195-1.6e-8, 20)
 #np.linspace(-0.1856-31.0e-6, -0.1856-30.25e-6, 20)
 #np.linspace(-0.1, 0.1, 20)
 #np.linspace(-0.2, 0.2, 20)
@@ -101,7 +106,6 @@ print("Saving results in:", outdir)
 
 
 for i in range(len(variable_array)):
-
     # Copy parameters and overwrite scanned one
     params = input_parameters.copy()
     params[paramstr] = variable_array[i]

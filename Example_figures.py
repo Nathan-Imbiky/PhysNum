@@ -31,7 +31,7 @@ vr = np.sqrt(v0**2-vt**2)
 # USER SETTINGS
 # ============================================================
 
-folder = r"Scan_theta_pendulum_x1_-3.1e+08_y1_0_vx1_1.2e+03_vy1_2.4e+02"
+folder = r"Scan_nsteps_pendulum_x1_1e+16_y1_0_vx1_0_vy1_0"
 
 plot_layout = {
     "theta_time": True,
@@ -181,7 +181,7 @@ for i,data in enumerate(datasets):
     vmaxx.append(np.max(vneu))
 
 axes[0].plot(param_values, hmin, color='r', linestyle='-', marker = 'x', label="hmin numérique")
-plt.axhline(h, color='k', linestyle='--', label="hmin exact")
+plt.axhline(lambd, color='k', linestyle='--', label="lambda")
 
 
 
@@ -479,6 +479,15 @@ plt.show()
 # Plot 8 : Momentum
 # ============================================================
 
+rT = mL*dTL/(mL + mT)
+rL = mT*dTL/(mL + mT)
+
+omega = np.sqrt(G*(mT + mL)/(dTL**3))
+
+vT = omega*rT
+vL = omega*rL
+
+ptot = mT+vT + mL*vL
 L = 0.2
 
 fig, axes = get_axes("momentum", "Variation de quantité de mouvement")
@@ -493,7 +502,7 @@ for i,data in enumerate(datasets):
     
     p0 = np.sqrt(px[0]**2 + py[0]**2)
     
-    p_err = np.sqrt((np.array(px)-px[0])**2 + (np.array(py)-py[0])**2)/p0
+    p_err = np.sqrt((np.array(px)-px[0])**2 + (np.array(py)-py[0])**2)/ptot
     
 
 
