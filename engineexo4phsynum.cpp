@@ -112,7 +112,7 @@ int main(int argc, char* argv[])
     vector<double> midPoint(ninters);    // Midpoints of each interval
     // DONE: fill h[i]  and  midPoint[i]
     
-    for(int i=0; i<npoints; ++i)
+    for(int i=0; i<ninters; ++i)
     {
      if(i<N1) {
      h[i] = h1;
