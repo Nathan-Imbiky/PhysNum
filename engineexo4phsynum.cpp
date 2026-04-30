@@ -54,7 +54,7 @@ double epsilon_r(/* DONE: add arguments */double r, double b, double R, bool tri
 // DONE: Implement the normalised free charge density rho_lib(r) / epsilon_0.
 //       Should allow for a trivial test case (trivial=true) 
 double rho_lib(/* DONE: add arguments */double r, double b, double a0, bool trivial)
-{
+{ //////////////////BEWARE : divisé par epsilon_0 ici
     // DONE: replace
     if(r<0) 
     {
@@ -100,11 +100,29 @@ int main(int argc, char* argv[])
     const double h2 = (R - b) / N2;      // Step size in outer region
 
     vector<double> r(npoints);
-    // TODO: fill r[0..N1] and r[N1..npoints-1]
+    // DONE: fill r[0..N1] and r[N1..npoints-1]
+    
+    for(int i=0; i<npoints; ++i)
+    {
+     if(i>N1) {r[i] = b+(i-N1)*h2;}
+     else {r[i] = i*h1;}
+    }
 
     vector<double> h(ninters);           // Interval widths
     vector<double> midPoint(ninters);    // Midpoints of each interval
-    // TODO: fill h[i]  and  midPoint[i]
+    // DONE: fill h[i]  and  midPoint[i]
+    
+    for(int i=0; i<npoints; ++i)
+    {
+     if(i<N1) {
+     h[i] = h1;
+     midPoints[i] = r[i] + h1/2;
+     }
+     else {
+     h[i] =  h2;
+     midPoints[i] = r[i] + h2/2;
+     }
+    }
 
     // ---------------------------------------------------------------
     // Assemble the tridiagonal system  A * phi = rhs
