@@ -159,13 +159,14 @@ int main(int argc, char* argv[])
         diag[k] += beta_k + alpha_k
     }
     
+    
+
+    // DONE: enforce the Dirichlet BC at r = R
     rhs[ninters-1] -= V0*upper[ninters-1];
     upper[ninters-1]=0;
     rhs[ninters] = v0;
     diag[ninters] = 1;
     
-
-    // TODO: enforce the Dirichlet BC at r = R
 
     // ---------------------------------------------------------------
     // Solve the linear system
