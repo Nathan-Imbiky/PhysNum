@@ -181,7 +181,9 @@ int main(int argc, char* argv[])
     vector<double> Dr(ninters, 0.0);
     for (int k = 0; k < ninters; ++k) {
         rmid[k] = midPoint[k];
-        // TODO: compute Er[k] and Dr[k] 
+        // DONE: compute Er[k] and Dr[k] 
+        Er[k]= -(phi[k+1]-phi[k])/h[k];
+        Dr[k] = Er[k]*epsilon_r(rmid[k], b, R, trivial);
     }
 
     // ---------------------------------------------------------------
