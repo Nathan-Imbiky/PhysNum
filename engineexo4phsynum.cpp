@@ -196,7 +196,7 @@ int main(int argc, char* argv[])
     for (int k = 0; k < ninters - 1; ++k) {
         rmidmid[k] = 0.5 * (rmid[k] + rmid[k + 1]);
         // DONE: compute div_Dr[k] and rho_at_midmid[k]
-        div_Dr[k] = (rmid[k+1]Dr[k+1]-rmid[k]Dr[k])/(h[k]*r[k+1])
+        div_Dr[k] = (rmid[k+1]Dr[k+1]-rmid[k]Dr[k])/((rmid[k+1]-rmid[k])*rmidmid[k])
         rho_at_midmid[k] = rho_lib(rmidmid[k], b, a0, trivial);
     }
 
