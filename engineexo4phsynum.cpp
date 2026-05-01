@@ -195,7 +195,9 @@ int main(int argc, char* argv[])
     vector<double> rho_at_midmid(ninters - 1, 0.0);
     for (int k = 0; k < ninters - 1; ++k) {
         rmidmid[k] = 0.5 * (rmid[k] + rmid[k + 1]);
-        // TODO: compute div_Dr[k] and rho_at_midmid[k]
+        // DONE: compute div_Dr[k] and rho_at_midmid[k]
+        div_Dr[k] = (Dr[k+1]-Dr[k])/h[k]
+        rho_at_midmid[k] = rho_lib(rmidmid[k], b, a0, trivial)
     }
 
     // ---------------------------------------------------------------
