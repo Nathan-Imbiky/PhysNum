@@ -131,11 +131,26 @@ int main(int argc, char* argv[])
     vector<double> lower(ninters, 0.0);  // Sub-diagonal  (lower[i] links row i+1 to col i)
     vector<double> upper(ninters, 0.0);  // Super-diagonal (upper[i] links row i to col i+1)
     vector<double> rhs(npoints, 0.0);    // Right-hand side
+    
+    double alpha_k = 0;
+    double beta_k = 0;
 
     for (int k = 0; k < ninters; ++k) {
         // TODO: compute alpha_k and beta_k
         //       then add their contributions to diag, lower, upper, and rhs
+        
+        alpha_k = midPoint[k]*epsilon_r(midPoint[k], b, R, trivial);
+	beta_k = r[k+1]*epsilon_r(r[k+1], b, R, trivial);
+        
+        upper[k] -= alpha_k;
+        lower[k] -= alpha_k;
+             
+        diag[k+1] -= beta_k+alpha_k;
+        if(k=0) {diag[0] -=alpha_k;}
+        if(k=ninters) {diag[k] -=beta_k;}
+        
     }
+    
 
     // TODO: enforce the Dirichlet BC at r = R
 
