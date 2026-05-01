@@ -116,7 +116,7 @@ int main(int argc, char* argv[])
     {
      if(i<N1) {
      h[i] = h1;
-     midPoints[i] = r[i] + h1/2;
+     midPoint[i] = r[i] + h1/2;
      }
      else {
      h[i] =  h2;
@@ -134,22 +134,35 @@ int main(int argc, char* argv[])
     
     double alpha_k = 0;
     double beta_k = 0;
+    double gamma_k = 0;
 
     for (int k = 0; k < ninters; ++k) {
         // TODO: compute alpha_k and beta_k
         //       then add their contributions to diag, lower, upper, and rhs
+        if(k==0)
+        {
+        alpha_k = 0;
+        gamma_k = h[0]*midPoint[0]*epsilon_r(midPoint[0], b, R, trivial)/2;
+        }
+        else
+        {
+        alpha_k = midPoint[k-1]*epsilon_r(midPoint[k-1], b, R, trivial)/h[k-1];
+        gamma_k = (h[k-1]*midPoint[k-1]*epsilon_r(midPoint[k-1], b, R, trivial) + h[k]*midPoint[k]*epsilon_r(midPoint[k], b, R, trivial))/2;
+        }
         
-        alpha_k = midPoint[k]*epsilon_r(midPoint[k], b, R, trivial);
-	beta_k = r[k+1]*epsilon_r(r[k+1], b, R, trivial);
+	beta_k = midPoint[k]*epsilon_r(midPoint[k], b, R, trivial)/h[k];
+	
+        rhs+= gamma_k;
         
-        upper[k] -= alpha_k;
-        lower[k] -= alpha_k;
-             
-        diag[k+1] -= beta_k+alpha_k;
-        if(k=0) {diag[0] -=alpha_k;}
-        if(k=ninters) {diag[k] -=beta_k;}
-        
+        upper[k] -= beta_k;
+        lower[k] -= beta_k;
+        diag[k] += beta_k + alpha_k
     }
+    
+    rhs[ninters-1] -= V0*upper[ninters-1];
+    upper[ninters-1]=0;
+    rhs[ninters] = v0;
+    diag[ninters] = 1;
     
 
     // TODO: enforce the Dirichlet BC at r = R
