@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "../../common/ConfigFile.h"
+#include "/home/imbiky/Desktop/MyFiles/PhysNum/Exercise4_2026/common/ConfigFile.h"
 
 using namespace std;
 
@@ -61,7 +61,7 @@ double rho_lib(/* DONE: add arguments */double r, double b, double a0, bool triv
      cout<<"Error rho_lib : r<0"<<endl;
     }
     if(trivial) {return 1;}
-    else if(r<b) {return a0*std::sin(pi*r/b);}
+    else if(r<b) {return a0*std::sin(PI*r/b);}
     else {return 0;}
 }
 
@@ -120,7 +120,7 @@ int main(int argc, char* argv[])
      }
      else {
      h[i] =  h2;
-     midPoints[i] = r[i] + h2/2;
+     midPoint[i] = r[i] + h2/2;
      }
     }
 
@@ -152,11 +152,11 @@ int main(int argc, char* argv[])
         
 	beta_k = midPoint[k]*epsilon_r(midPoint[k], b, R, trivial)/h[k];
 	
-        rhs+= gamma_k;
+        rhs[k]+= gamma_k;
         
         upper[k] -= beta_k;
         lower[k] -= beta_k;
-        diag[k] += beta_k + alpha_k
+        diag[k] += beta_k + alpha_k;
     }
     
     
@@ -164,7 +164,7 @@ int main(int argc, char* argv[])
     // DONE: enforce the Dirichlet BC at r = R
     rhs[ninters-1] -= V0*upper[ninters-1];
     upper[ninters-1]=0;
-    rhs[ninters] = v0;
+    rhs[ninters] = V0;
     diag[ninters] = 1;
     
 
@@ -196,7 +196,7 @@ int main(int argc, char* argv[])
     for (int k = 0; k < ninters - 1; ++k) {
         rmidmid[k] = 0.5 * (rmid[k] + rmid[k + 1]);
         // DONE: compute div_Dr[k] and rho_at_midmid[k]
-        div_Dr[k] = (rmid[k+1]Dr[k+1]-rmid[k]Dr[k])/((rmid[k+1]-rmid[k])*rmidmid[k])
+        div_Dr[k] = (rmid[k+1]*Dr[k+1]-rmid[k]*Dr[k])/((rmid[k+1]-rmid[k])*rmidmid[k]);
         rho_at_midmid[k] = rho_lib(rmidmid[k], b, a0, trivial);
     }
 
