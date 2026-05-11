@@ -1,242 +1,75 @@
 import numpy as np
 import subprocess
-import matplotlib.pyplot as plt
-from scipy.interpolate import CubicSpline # If you don't have this, you can use np.interp instead, but it may be less accurate
 import os
 
-# Parameters
-repertoire = ''
-executable = './engine' # Change this if your executable has a different name or path, like last week
-input_filename = 'configuration.in.example'
+# -----------------------------------------------------------------------
+# Parameter scan script for the electrostatics exercise.
+#
+# Default use: convergence study of phi(0) vs N (= N1 = N2) in the
+# trivial (uniform) case.  Change 'paramstr' and 'variable_array' to
+# scan any other parameter.
+# -----------------------------------------------------------------------
 
-tol = 7.75e-3
-#/ 10**np.arange(3, 10)
-tf = 32.0
-N0 = 0.0
-g = 0.5
-d = 0.01
+# Path to compiled executable (adjust if needed)
 
+repertoire     = ''
+#repertoire     = '/home/imbiky/Desktop/MyFiles/PhysNum/Exercise4_2026'
+executable     = './engineexo4phsynum'
+input_filename = 'trivial.in'   # base configuration file
 
+N=5
 
-alpha = 0.5 # 1 explicit, 0 implicit, 0.5 semi-implicit
+# Base parameters (values here are overwritten by the scan below)
+input_parameters = {
+    'b'      : 0.05,   # Inner radius [m]
+    'R'      : 0.1,    # Outer radius [m]
+    'V0'     : 0,      # Boundary potential [V]
+    'a0'     : 1,      # Charge density scale [V/m^2]  (unused when trivial=true)
+    'trivial': 'true', # true: uniform test case
+    'N1'     : N,      # Intervals in [0, b]
+    'N2'     : N,      # Intervals in [b, R]
+}
 
-if alpha == 0:
-    alphastr = "expl"
-elif alpha == 0:
-    alphastr = "impl"
-else:
-    alphastr = "semi_impl"
+# -----------------------------------------------------------------------
+# Choose the parameter to scan
+# -----------------------------------------------------------------------
+paramstr       = 'N1'                        # parameter name in engine
+variable_array = 2**np.arange(1,12)          # N = 2, 4, 8, ..., 256
 
-figstr = f"runaway_{alphastr}"
+# Build a label for output directories / filenames
+outstr = (f"electrostatics_b_{input_parameters['b']:.2g}"
+          f"_R_{input_parameters['R']:.2g}"
+          f"_trivial_{input_parameters['trivial']}")
 
-# -------------------------------------------------
-# Create output directory (2 significant digits)
-# -------------------------------------------------
-outdir = f"Outputs_g_{g:.2g}_d_{d:.2g}"
+# -----------------------------------------------------------------------
+# Create output directory
+# -----------------------------------------------------------------------
+outdir = f"Scan_{paramstr}_{outstr}"
 os.makedirs(outdir, exist_ok=True)
 print("Saving results in:", outdir)
-# -------------------------------------------------
 
-dt = tf / 2**np.arange(3, 11) #TODO: Adjust for your needs
+# -----------------------------------------------------------------------
+# Run the scan
+# -----------------------------------------------------------------------
+for val in variable_array:
 
-dtmin = min(dt)
-dtmax = max(dt)
+    params = input_parameters.copy()
+    params[paramstr] = val
+    # For a convergence study keep N1 = N2
+    if paramstr == 'N1':
+        params['N2'] = val
 
-nsimul = len(dt)
-#ntol = len(tol)
-
-# Exact solution #TODO: Fill
-beta = np.sqrt(g**2+4*d)
-
-Nfp = (g+beta)/2. # steady state solution at t=inf
-    
-Nf =  (2*d*(1-np.exp(-beta*tf)))/(beta-g+(beta+g)*np.exp(-beta*tf)) # exact solution at tf
-
-Nr = 0.2  # fraction of equilibrium defining characteristic time
-
-# ---- exact characteristic time ----
-t_ref = np.linspace(0, tf, 200000)
-
-#TODO: calculate N_exact as function of time
-N_exact = (2*d*(1-np.exp(-beta*t_ref)))/(beta-g+(beta+g)*np.exp(-beta*t_ref)) # exact solution as function of time
-
-N_approx = d*(1-np.exp(-beta*t_ref))/(-g)
-
-ratio_exact = N_exact / Nfp
-#TODO: calculate tau_ref as the time when ratio_exact crosses Nr, using interpolation
-tau_ref = np.interp(Nr, ratio_exact, t_ref); 
-
-paramstr = 'dt'
-param = dt
-
-# Simulations
-outputs = []
-totalsteps = []
-tau_list = []
-N_list = []
-ratio = []
-error = np.zeros(nsimul)
-
-for i in range(nsimul):
-    dt_val = param[i]  # current dt
-
-    output_file = f"{alphastr}_dt={dt_val:.15g}.out"
+    output_file = f"{outstr}_{paramstr}_{val}"
     output_path = os.path.join(outdir, output_file)
-    outputs.append(output_path)
-    # Almost all parameters are passed as command line arguments, but you can also use an input file if you prefer. Adjust the command below accordingly.
+
+    # Build the command-line parameter string
+    param_string = " ".join(f"{k}={v}" for k, v in params.items())
+
     cmd = (
         f"{repertoire}{executable} {input_filename} "
-        f"{paramstr}={dt_val:.15g} output={output_path}"
-        f" alpha={alpha:.2g} tf={tf:.3f} N0={N0:.3f} g={g:.4f} d={d:.4f}"
-        f" tol={tol:.6g}"
+        f"{param_string} output={output_path}"
     )
 
     print(cmd)
     subprocess.run(cmd, shell=True)
-    print('Done.')
-
-
-
-error = np.zeros(nsimul)
-
-
-suffix = f"_g_{g:.2g}_d_{d:.2g}_dtmin{dtmin:.2g}_dtmax{dtmax:.2g}_"
-repos = "figures" + suffix
-os.makedirs(repos, exist_ok=True)
-
-
-
-lw = 1.5
-fs = 20
-
-fig, axs = plt.subplots(1, 1)
-
-
-for i in range(nsimul):
-    with open(outputs[i]) as f:
-        lines = f.readlines()
-
-        total_steps = int(lines[-1].split(":")[1])
-        data = np.loadtxt(lines[:-1])
-        t = data[:, 0]
-        N = data[:, 1]
-
-        NN = N[-1]
-        N_list.append(NN)
-        totalsteps.append(total_steps)
-
-        #TODO: calculate ratio and tau using interpolation, and store in tau_list
-        ratio = N/NN # ratio as function of time
-        
-        #print(ratio[0], ratio[-1], Nr)
-
-        if ratio[0] <= Nr <= ratio[-1]: # Check if Nr is within the range of ratio for interpolation
-            try:
-                tau = np.interp(Nr, ratio, t) #TODO: interpolate to find tau where ratiocrosses Nr		
-                print(tau)
-            except ValueError as e:
-                print(e)
-                tau = np.nan
-                print("except")
-        else:
-            tau = np.nan
-            print("else")
-        print(tau)
-        tau_list.append(tau)
-
-        error[i] = np.abs(1 - NN/Nf) #TODO: calculate relative error on Nf and store in error[i]
-        
-
-        axs.plot(t, N, label=f"dt={param[i]:.2e}", linewidth=lw, alpha=0.7)
-    
-
-plt.rcParams['font.size'] = 20
-plt.rcParams['legend.fontsize'] = 20
-
-plt.plot(t_ref, N_exact, 'k--', linewidth=2, label="Exact")
-#plt.plot(t_ref, N_approx, 'r--', linewidth=2, label="Approximative")
-axs.set_xlabel(r'$\overline{t}$', fontsize=fs)
-axs.set_ylabel(r'$\overline{N}$', fontsize=fs)
-axs.set_xlim(0, tf)
-axs.set_ylim(0, Nf*1.2)
-plt.xticks(fontsize=17)
-plt.yticks(fontsize=17)
-plt.legend(fontsize=12)
-plt.grid(True)
-plt.tight_layout()
-plt.savefig(os.path.join(outdir, f"{figstr}_time.png"), dpi=300)
-plt.savefig(repos+"/N_t"+suffix+".png")
-
-# Error vs dt
-dtlist = dt
-
-plt.figure()
-plt.loglog(dtlist, error, 'r+-', label="numerical")
-plt.loglog(dtlist, dtlist/1e6, 'k--', label="O(dt)")
-plt.loglog(dtlist, dtlist**2/1e6, 'k-.', label="O(dt^2)")
-plt.xlabel(r"d$\overline{t}$")
-plt.ylabel("Relative error on Nf")
-plt.legend()
-plt.grid(True)
-plt.tight_layout()
-plt.savefig(os.path.join(outdir, f"{figstr}_Nf_error.png"), dpi=300)
-plt.savefig(repos+"/err_dt"+suffix+".png")
-
-
-
-# Convergence plot
-plt.figure()
-plt.plot(dtlist, N_list, 'r+-', label="numerical")
-plt.axhline(Nf, color='k', linestyle='--', label="Exact")
-plt.xlabel(r"d$\overline{t}$")
-plt.ylabel(r"Final $\overline{N}$")
-plt.xscale('log')
-plt.grid(True)
-plt.legend()
-plt.tight_layout()
-plt.savefig(os.path.join(outdir, f"{figstr}_Nf_conv.png"), dpi=300)
-plt.savefig(repos+"/Lim_nf_dt"+suffix+".png")
-
-
-
-
-plt.figure()
-plt.plot(dtlist, tau_list, 'r+-', label="numerical")
-plt.axhline(tau_ref, color='k', linestyle='--', label="Exact")
-plt.xlabel(r"tol")
-plt.ylabel(r"Characteristic time $\overline{\tau}$")
-plt.xscale('log')
-plt.ylim(0, tf/10)  # Set y-limits to focus on the relevant range
-plt.grid(True)
-plt.legend()
-plt.tight_layout()
-plt.savefig(os.path.join(outdir, f"{figstr}_tau.png"), dpi=300)
-plt.savefig(repos+"/Lim_tau_dt"+suffix+".png")
-
-
-tau_err = np.abs(1 - np.array(tau_list) / tau_ref)
-
-plt.figure()
-plt.loglog(dtlist, tau_err, 'r+-', label="numerical")
-plt.loglog(dtlist, dtlist, 'k--', label="O(dt)")
-plt.loglog(dtlist, dtlist**2, 'k-.', label="O(dt^2)")
-plt.xlabel(r"d$\overline{t}$")
-plt.ylabel(r"Relative error on $\overline{\tau}$")
-plt.legend()
-plt.grid(True)
-plt.tight_layout()
-plt.savefig(os.path.join(outdir, f"{figstr}_tau_error.png"), dpi=300)
-plt.savefig(repos+"/err_tau_dt"+suffix+".png")
-
-
-plt.figure()
-plt.loglog(totalsteps, tau_err, 'r+-', label=f"{alphastr}")
-plt.xlabel("Total steps")
-plt.ylabel("Relative error on tau")
-plt.grid(True, which="both", linestyle="--", linewidth=0.5)
-plt.tight_layout()
-plt.savefig(os.path.join(outdir, f"{figstr}_tau_error_vs_steps.png"), dpi=300)
-plt.savefig(repos+"/err_tau_nsteps"+suffix+".png")
-
-
-plt.show()
+    print("Done.")

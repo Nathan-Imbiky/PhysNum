@@ -142,12 +142,12 @@ int main(int argc, char* argv[])
         if(k==0)
         {
         alpha_k = 0;
-        gamma_k = h[0]*midPoint[0]*epsilon_r(midPoint[0], b, R, trivial)/2;
+        gamma_k = h[0]*midPoint[0]*rho_lib(midPoint[0], b, a0, trivial)/2;
         }
         else
         {
         alpha_k = midPoint[k-1]*epsilon_r(midPoint[k-1], b, R, trivial)/h[k-1];
-        gamma_k = (h[k-1]*midPoint[k-1]*epsilon_r(midPoint[k-1], b, R, trivial) + h[k]*midPoint[k]*epsilon_r(midPoint[k], b, R, trivial))/2;
+        gamma_k = (h[k-1]*midPoint[k-1]*rho_lib(midPoint[k-1], b, a0, trivial) + h[k]*midPoint[k]*rho_lib(midPoint[k], b, a0, trivial))/2;
         }
         
 	beta_k = midPoint[k]*epsilon_r(midPoint[k], b, R, trivial)/h[k];
@@ -164,6 +164,7 @@ int main(int argc, char* argv[])
     // DONE: enforce the Dirichlet BC at r = R
     rhs[ninters-1] -= V0*upper[ninters-1];
     upper[ninters-1]=0;
+    lower[ninters-1]=0; //suspect
     rhs[ninters] = V0;
     diag[ninters] = 1;
     
