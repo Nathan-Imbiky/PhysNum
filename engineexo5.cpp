@@ -78,7 +78,7 @@ double initialprofile(double x, double xa, double xb, double xc, double xd, doub
     }
     else if (x>xa && x<=xb)
     {
-      return   ho + (hrec-ho)*sin((PI*x - PI*xa)/(2*xb  - 2*xa));
+      return   ho + (hrec-ho)*sin((PI*x - PI*xa)/(2*xb  - 2*xa))*sin((PI*x - PI*xa)/(2*xb  - 2*xa));
     }
     else if (x>xb && x<=xc)
     {
@@ -86,7 +86,7 @@ double initialprofile(double x, double xa, double xb, double xc, double xd, doub
     }
     else if (x>xc && x<=xd)
     {
-       return    hrec - (hrec-ho)*sin((PI*x - PI*xc)/(2*xd  - 2*xc));
+       return    hrec - (hrec-ho)*sin((PI*x - PI*xc)/(2*xd  - 2*xc))*sin((PI*x - PI*xc)/(2*xd  - 2*xc));
     }
     else if (x>xd && x<=L)
     {
