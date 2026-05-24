@@ -70,7 +70,7 @@ ostream& operator<<(ostream& o, const vector<T>& v)
 }
 
 
-double initialprofile(double x, double xa, double xb, double xc, double xd, double L, double ho, double hrec) ////TODO 
+double initialprofile(double x, double xa, double xb, double xc, double xd, double L, double ho, double hrec) ////DONE 
 {
     if(x<=xa && x>=0)
     {
@@ -168,12 +168,12 @@ int main(int argc, char* argv[])
     ofstream fichier_f((output + "_f").c_str());   fichier_f.precision(15);
     ofstream fichier_en((output + "_en").c_str()); fichier_en.precision(15);
 
-    // TODO: Initialiser fpast, fnow, beta2
+    // DONE: Initialiser fpast, fnow, beta2
     vector<double> fpast(N, 0.0), fnow(N, 0.0), fnext(N, 0.0), beta2(N, 1.0);
     for (int i = 0; i < N; ++i) {
-        beta2[i] = vel2[i]*dt/dx; // DONE: calculer beta^2 aux points de maillage tried
+        beta2[i] = vel2[i]*dt*dt/(dx*dx); // DONE: calculer beta^2 aux points de maillage tried
         fnow[i]  = 0.;
-        fpast[i] = 1.; // TODO: Implementer une condition initiale statique
+        fpast[i] = 0; // DONE: Implementer une condition initiale statique tried
     }
 
     // Time loop
