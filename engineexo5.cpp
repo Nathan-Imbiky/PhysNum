@@ -17,7 +17,7 @@ double energy(const vector<double>& fnow, double dx)
 	
 	double sum = 0;
 	
-	for(size_t i; i<fnow.size(); ++i)
+	for(size_t i=0; i<fnow.size(); ++i)
 	{
 		sum += fnow[i]*fnow[i]*dx;
 	}
@@ -33,11 +33,11 @@ void boundary_condition(vector<double>& fnext, const vector<double>& fnow,
 {
     // Bord gauche (x = 0)
     if (bc_l == "fixe") {
-        fnext[0] = fnow[0]; //////tried, y a moyen c juste 0
+        fnext[0] = 0; //////tried, y a moyen c juste 0
     } else if (bc_l == "libre") {
         fnext[0] = fnext[1]; // DONE: modifier pour la condition libre
     } else if (bc_l == "sortie") {
-        fnext[0] = fnow[0] + sqrt(beta2[N-1])*(fnow[1] - fnow[0]); // DONE: modifier pour la condition de sortie tried
+        fnext[0] = fnow[0] + sqrt(beta2[0])*(fnow[1] - fnow[0]); // DONE: modifier pour la condition de sortie tried
     } else if (bc_l == "harmonique") {
         fnext[0] = A*sin(om*t); // DONE: modifier pour l'excitation sinusoidale f(0,t)=A*sin(om*t) tried
     } else {
@@ -46,7 +46,7 @@ void boundary_condition(vector<double>& fnext, const vector<double>& fnow,
 
     // Bord droit (x = L)
     if (bc_r == "fixe") {
-        fnext[N-1] = fnow[N-1]; //////tried, y a moyen c juste 0
+        fnext[N-1] = 0; //////tried, y a moyen c juste 0
     } else if (bc_r == "libre") {
         fnext[N-1] = fnext[N-2]; // DONE: modifier pour la condition libre
     } else if (bc_r == "sortie") {
